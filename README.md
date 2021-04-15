@@ -1,5 +1,5 @@
-# fabricPlatform
-基于fabric的测试平台
+# hospitalDataSharingSystem
+基于fabric的医疗数据共享平台
 ## Swagger
 ### 注解说明
 - @Api：用于修饰Controller类，生成Controller相关文档信息
