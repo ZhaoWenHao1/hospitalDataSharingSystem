@@ -261,7 +261,15 @@ public class DataController {
         Integer userId = JwtUtil.parseJWT(token).get("id", Integer.class);
         User user = userService.findUserById(userId);
         List<DataSample> interChannelPullDataList = channelDataAuthorityService.getInterChannelPullData(user.getId(), user.getChannelId());
-        List<DataSampleVO> dataSampleVOList = interChannelPullDataList.parallelStream().map(DataSampleVOMapper.INSTANCE::toDataSampleVO).peek(dataSampleVO -> dataSampleVO.setChannelName(channelService.findChannelById(dataSampleVO.getChannelId()).getChannelName())).collect(Collectors.toList());
+        List<DataSampleVO> dataSampleVOList = interChannelPullDataList.parallelStream()
+                .map(DataSampleVOMapper.INSTANCE::toDataSampleVO)
+                .peek(dataSampleVO -> {
+                   Channel channel = channelService.findChannelById(dataSampleVO.getChannelId());
+                    dataSampleVO.setHospitalName(channel.getHospitalName());
+                    dataSampleVO.setChannelName(channel.getChannelName());
+//                    return dataSampleVO;
+                })
+                .collect(Collectors.toList());
 
         return new CommonResult<>(200,"success", dataSampleVOList);
     }

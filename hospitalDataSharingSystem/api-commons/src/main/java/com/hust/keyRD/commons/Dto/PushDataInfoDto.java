@@ -13,4 +13,5 @@ public class PushDataInfoDto {
     private Integer dataId;
     private Integer channelId;
     private String channelName;
+    private String hospitalName;
 }

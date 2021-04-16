@@ -27,7 +27,7 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource      #当前数据源操作类型
     # mysql驱动类
     driver-class-name: org.gjt.mm.mysql.Driver
-    url: jdbc:mysql://211.69.198.55:3306/Key-R-D-based-on-fabric?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://211.69.198.55:3306/hospital_data_sharing_system?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
     username: dev
     password: dev
     #数据源配置信息

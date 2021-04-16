@@ -15,6 +15,7 @@ public class DataSampleVO {
     private Integer id;
     private Integer channelId;
     private String channelName;
+    private String hospitalName;
     private String mongoId;
     private String dataName;
     private String dataType;

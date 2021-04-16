@@ -12,4 +12,6 @@ import java.io.Serializable;
 public class Channel implements Serializable {
     private Integer id;
     private String channelName;
+    private String hospitalName;
+    
 }

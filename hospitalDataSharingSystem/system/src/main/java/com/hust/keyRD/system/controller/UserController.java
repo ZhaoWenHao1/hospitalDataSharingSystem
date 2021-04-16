@@ -47,9 +47,9 @@ public class UserController{
                 return new CommonResult<>(500,"您不是普通用户，请选择正确的登录方式",null);
             }
             String token = JwtUtil.createJWT(Integer.MAX_VALUE, uresult);
-            String channelName = channelService.findChannelById(uresult.getChannelId()).getChannelName();
+            String hospitalName = channelService.findChannelById(uresult.getChannelId()).getHospitalName();
             jsonObject.put("user", uresult);
-            jsonObject.put("channelName", channelName);
+            jsonObject.put("hospitalName", hospitalName);
             jsonObject.put("token", token);
             return new CommonResult<>(200,"登录成功",jsonObject);
         }

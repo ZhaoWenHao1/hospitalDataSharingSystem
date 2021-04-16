@@ -65,7 +65,8 @@
 
         select channel_data_authority.data_id    as dataId,
                channel_data_authority.channel_id as channelId,
-               channel.channel_name              as channelName
+               channel.channel_name              as channelName,
+               channel.hospital_name             as hospitalName
         from channel_data_authority
                  join data_sample
                       on channel_data_authority.user_id = #{userId}

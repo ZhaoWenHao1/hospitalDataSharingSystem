@@ -86,7 +86,7 @@ public class DataServiceImpl implements DataService
                 if(userInnerDataVO.getPushChannelSet() == null){
                     userInnerDataVO.setPushChannelSet(new HashSet<>());
                 }
-                userInnerDataVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(), pushDataInfoDto.getChannelName()));
+                userInnerDataVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(), pushDataInfoDto.getChannelName(), pushDataInfoDto.getHospitalName()));
             }
         });
         return userInnerDataVOList;

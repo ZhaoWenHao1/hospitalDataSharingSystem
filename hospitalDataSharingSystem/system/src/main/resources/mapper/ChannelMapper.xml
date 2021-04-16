@@ -5,6 +5,7 @@
         <!--映射column为数据库字段，property为实体类属性-->
         <id column="id" property="id" jdbcType="INTEGER"/>
         <id column="channel_name" property="channelName" jdbcType="INTEGER"/>
+        <id column="hospital_name" property="hospitalName" jdbcType="VARCHAR"/>
     </resultMap>
     <select id="getAllChannel" parameterType="Map" resultMap="BaseResultMap" >
         select * from channel;
