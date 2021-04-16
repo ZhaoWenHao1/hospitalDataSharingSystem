@@ -1,6 +1,6 @@
 server:
   address: 0.0.0.0
-  port: 8080
+  port: 8070
   connection-timeout: 18000000
 
 spring:
@@ -27,7 +27,7 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource      #当前数据源操作类型
     # mysql驱动类
     driver-class-name: org.gjt.mm.mysql.Driver
-    url: jdbc:mysql://211.69.198.53:3307/Key-R-D-based-on-fabric?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
+    url: jdbc:mysql://211.69.198.55:3306/Key-R-D-based-on-fabric?useUnicode=true&characterEncoding=UTF-8&useSSL=false&serverTimezone=GMT%2B8
     username: dev
     password: dev
     #数据源配置信息
@@ -46,8 +46,8 @@ spring:
       maxPoolPreparedStatementPerConnectionSize: 200
   data:
     mongodb:
-      host: 211.69.198.53
-      port: 27018
+      host: 211.69.198.55
+      port: 27017
       database: fabricDoc
       username: root
       password: fabric
@@ -65,7 +65,7 @@ feign:
       connectTimeout: 5000
       readTimeout: 5000   # 读超时时间
       loggerLevel: full # 日志级别
-      
+
 logging:
   level:
     com:

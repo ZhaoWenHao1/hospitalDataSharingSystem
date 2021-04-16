@@ -8,9 +8,7 @@ import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.vo.AllChannelUserVO;
-import com.hust.keyRD.commons.vo.AllDataUserAuthorityVO;
 import com.hust.keyRD.commons.vo.mapper.AllChannelUserAuthorityVOMapper;
-import com.hust.keyRD.commons.vo.mapper.AllDataUserAuthorityVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.service.ChannelAuthorityService;
 import com.hust.keyRD.system.service.ChannelService;
@@ -24,7 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -89,7 +88,7 @@ public class ChannelAuthorityController {
         if (authorityKey != 1) return new CommonResult<>(400, "authorityKey请选择：" +
                 "1：在该channel上上传文件权限", null);
         log.info("************fabric添加管道权限操作记录区块链开始*****************");
-        fabricService.grantUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1",user.getUsername());
+        fabricService.grantUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername());
         channelAuthority.setChannelId(adminChannelId);
         channelAuthorityService.addChannelAuthority(channelAuthority);
         log.info("************fabric添加管道权限操作记录区块链结束*****************");
@@ -103,23 +102,23 @@ public class ChannelAuthorityController {
         Integer userId = channelAuthority.getUserId();
         String token = httpServletRequest.getHeader("token");
         Integer adminId = JWT.decode(token).getClaim("id").asInt();//管理员的id号
-        User admin = userService.findUserById(userId);
+        User admin = userService.findUserById(adminId);
         Integer adminChannelId = userService.findUserById(adminId).getChannelId();
         // 删除的权限是管理员所在的channel权限
         Channel channel = channelService.findChannelById(adminChannelId);
         User user = userService.findUserById(channelAuthority.getUserId());
         Integer authorityKey = channelAuthority.getAuthorityKey();
-        if (channel == null) return new CommonResult<>(400, "撤销权限失败，不存在channelId为：" + adminChannelId + "的channel", null);
+        if (channel == null)
+            return new CommonResult<>(400, "撤销权限失败，不存在channelId为：" + adminChannelId + "的channel", null);
         if (user == null) return new CommonResult<>(400, "撤销权限失败，不存在userId为：" + userId + "的用户", null);
         if (authorityKey != 1) return new CommonResult<>(400, "authorityKey请选择：" +
                 "1：在该channel上上传文件权限", null);
-        if (fabricService.revokeUserPermission2Add(admin.getUsername(),channel.getChannelName(), "role1", user.getUsername())) {
+        if (fabricService.revokeUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername())) {
             channelAuthority.setChannelId(adminChannelId);
             Integer count = channelAuthorityService.deleteChannelAuthority(channelAuthority);
             if (count >= 1) {
                 return new CommonResult<>(200, "channelAuthority撤销权限成功", channelAuthority);
-            }
-            else {
+            } else {
                 throw new RuntimeException("sql error");
             }
         } else {

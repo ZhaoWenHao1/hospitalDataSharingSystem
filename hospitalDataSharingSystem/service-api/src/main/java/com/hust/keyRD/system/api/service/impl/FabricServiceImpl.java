@@ -2,6 +2,7 @@ package com.hust.keyRD.system.api.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.Record;
 import com.hust.keyRD.commons.exception.fabric.FabricException;
 import com.hust.keyRD.commons.utils.HashUtil;
@@ -172,8 +173,9 @@ public class FabricServiceImpl implements FabricService {
     }
 
     @Override
-    public String crossAccess(String peers, String channelName, String ccName, String fcn, List<String> args) {
-        Response response = fabricFeignService.crossAccess(peers, channelName, ccName, fcn, args);
+    public String crossAccess(String requester, String listenPeers, String peers,  String channelName, String ccName,
+                              String fcn, List<String> args) {
+        Response response = fabricFeignService.crossAccess(requester,listenPeers,peers,channelName,ccName,fcn,args);
         return response.body().toString();
     }
 
@@ -319,11 +321,50 @@ public class FabricServiceImpl implements FabricService {
         }
     }
 
+    @Override
+    public String dataSyncRecordAfterShare(String requester, String requesterChannelName,String fileHash, String fileId,String dataChannelName, String typeTx, String txId, String fcn) {
+        String peers = getPeers(requester);
+        String channelUserName = getChannelUsername(requester);
+        String ccName = "record";
+        List<String> args = new ArrayList<String>(){{
+            add(fileHash);
+            add(requesterChannelName);
+            add(channelUserName);
+            add(dataChannelName);
+            add(fileId);
+            add(typeTx);
+            add(txId);
+        }};
+        String response = invokeChaincode(requester,peers,requesterChannelName,ccName,fcn,args);
+        if (response.contains("hash_data")) {
+            log.info("dataSyncRecordAfterShare {} {} {}成功", requester, typeTx, fileId);
+            try{
+                // 获取上链事务id
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode root = mapper.readTree(response);
+                return root.path("this_tx_id").asText();
+            }catch (IOException e){
+                throw new FabricException("第二次上链失败，info: 无法解析出this_tx_id" );
+            }
+
+        } else {
+            log.error("dataSyncRecord失败，info: {}", response);
+            throw new FabricException("dataSyncRecord失败,info: " + response);
+        }
+    }
+
     private Record parseRecordFromResponse(String response) throws IOException {
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response);
         String recordJson = root.toString().replaceAll("\\\\", "");
         return mapper.readValue(recordJson, Record.class);
+    }
+    
+    private ShareResult parseShareResultFromResponse(String response) throws IOException{
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode root = mapper.readTree(response);
+        String recordJson = root.toString().replaceAll("\\\\", "");
+        return mapper.readValue(recordJson, ShareResult.class);
     }
 
     @Override
@@ -491,6 +532,146 @@ public class FabricServiceImpl implements FabricService {
         return revokeInnerChannelPull(fileId, role, username);
     }
 
+    @Override
+    public ShareResult pullData(String requester, String dataId, String dataHash,String requesterChannelName, String dataChannelName, String copyDataId) {
+        String peers = getPeers(requester);
+        String channelUsername = getChannelUsername(requester);
+        String fcn = "srcAuditRecord";
+        String ccName = "record";
+        List<String> args = new ArrayList<String>(){{
+            add(dataHash);
+            add(requesterChannelName);
+            add(channelUsername);
+            add(dataChannelName);
+            add(dataId);
+            add("pull");
+        }};
+        String response = crossAccess(requester,peers,peers,requesterChannelName,ccName,fcn,args);
+        ShareResult shareResult;
+        try{
+            shareResult = parseShareResultFromResponse(response);
+            if(!shareResult.getResult()){
+                throw new FabricException("pullData failed! info: " + response);
+            }
+        }catch (IOException e){
+            throw new FabricException("pullData failed! info: " + response);
+        }
+        // 目标域二次上链  文件所在channel
+        String targetRequester, targetChannelName;
+        if(requesterChannelName.equals("channel1")){
+            targetRequester = "org5_user";
+            targetChannelName = "channel2";
+        }else{
+            targetRequester = "org2_user";
+            targetChannelName = "channel1";
+        }
+        String targetPeers = getPeers(targetRequester);
+        args.add(shareResult.getTxId());
+        String res = invokeChaincode(targetRequester, targetPeers, targetChannelName, ccName, "dstSyncRecord", args);
+        System.out.println("目标域二次上链: " + res);
+        if(!res.contains("hash_data")){
+            throw new FabricException("pushData 目标域二次上链失败！info: " + res);
+        }
+        shareResult.setTargetChannelResponse(res);
+        // 发起域二次上链  拉取者所在channel
+        args.set(4, copyDataId);
+        res = invokeChaincode(requester,peers,requesterChannelName,ccName,"srcSyncRecord",args);
+        System.out.println("发起域二次上链: " + res);
+        if(!res.contains("hash_data")){
+            throw new FabricException("pushData 发起域二次上链失败！info: " + res);
+        }
+        shareResult.setSrcChannelResponse(res);
+        return shareResult;
+    }
+
+    @Override
+    public ShareResult pushData(String requester, String dataId, String dataHash, String requesterChannelName, String targetChannelName, String copyDataId) {
+        String peers = getPeers(requester);
+        // 根据channel获取该channel的一个用户名
+        String targetChannelUsername = getChannelUsernameByChannel(targetChannelName);
+        String fcn = "srcAuditRecord";
+        String ccName = "record";
+        List<String> args = new ArrayList<String>(){{
+            add(dataHash);
+            add(requesterChannelName);
+            add(targetChannelUsername);
+            add(targetChannelName);
+            add(dataId);
+            add("push");
+        }};
+        String response = crossAccess(requester,peers,peers,requesterChannelName,ccName,fcn,args);
+        ShareResult shareResult;
+        try{
+            shareResult = parseShareResultFromResponse(response);
+            if(!shareResult.getResult()){
+                throw new FabricException("pullData failed! info: " + response);
+            }
+        }catch (IOException e){
+            throw new FabricException("pullData failed! info: " + response);
+        }
+        // 发起域二次上链  文件所在channel
+        args.add(shareResult.getTxId());
+        String res = invokeChaincode(requester,peers,requesterChannelName,ccName,"srcSyncRecord",args);
+        System.out.println("发起域二次上链: " + res);
+        if(!res.contains("hash_data")){
+            throw new FabricException("pushData 发起域二次上链失败！info: " + res);
+        }
+        shareResult.setSrcChannelResponse(res);
+
+        // 目标域第二次上链
+        String targetRequester;
+        if(requesterChannelName.equals("channel1")){
+            targetRequester = "org5_user";
+        }else{
+            targetRequester = "org2_user";
+        }
+        String targetPeers = getPeers(targetRequester);
+        
+        args.set(4, copyDataId);
+        res = invokeChaincode(targetRequester, targetPeers, targetChannelName, ccName, "dstSyncRecord", args);
+        System.out.println("目标域二次上链: " + res);
+        if(!res.contains("hash_data")){
+            throw new FabricException("pushData 目标域二次上链失败！info: " + res);
+        }
+        shareResult.setTargetChannelResponse(res);
+        return shareResult;
+    }
+
+    @Override
+    public Record traceForwardCrossChain(String requester, String requesterChannelName, String txId, String targetChannelName) {
+        String peers = getPeers(requester);
+        String fcn = "crossTraceForward";
+        String ccName = "record";
+        List<String> args = new ArrayList<String>(){{
+            add(txId);
+            add(targetChannelName);
+        }};
+        String response = fabricFeignService.traceForwardCrossChain(requester,peers, peers, requesterChannelName, ccName, fcn, args);
+        try{
+            return parseRecordFromResponse(response);
+        }catch (IOException e){
+            log.error("追踪失败, response:{}", response);
+            throw new FabricException("追踪失败: response:" + response);
+        }
+    }
+
+
+    // push时目标域二次上链
+    private String pushTargetChannelDataSys(String targetChannelName, List<String> args){
+        String requester;
+        if(targetChannelName.equals("channel1")){
+            requester = "org2_user";
+        }else{
+            requester = "org5_user";
+        }
+        String peers = getPeers(requester);
+        String fcn = "dstSyncRecord";
+        String ccName = "record";
+        String res = invokeChaincode(requester,peers,targetChannelName,ccName,fcn,args);
+        System.out.println(res);
+        return res;
+    }
+
 
     public String getPeers(String requester) {
         String str1 = "peer0.org", str2 = ".example.com";
@@ -508,6 +689,14 @@ public class FabricServiceImpl implements FabricService {
         }
         char n = requester.charAt(3);
         return prefix + "@org" + n + ".example.com";
+    }
+    
+    public String getChannelUsernameByChannel(String channel){
+        if(channel.equals("channel1")){
+            return "User1@org2.example.com";
+        }else{
+            return "User1@org5.example.com";
+        }
     }
     
     

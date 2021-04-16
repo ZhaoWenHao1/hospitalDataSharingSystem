@@ -2,6 +2,7 @@ package com.hust.keyRD.system.api.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.Record;
 import com.hust.keyRD.commons.exception.fabric.FabricException;
 import com.hust.keyRD.system.api.service.FabricService;
@@ -207,5 +208,25 @@ class FabricServiceImplTest {
         System.out.println(res);
         response = fabricService.getCentrePolicy("data3");
         System.out.println(response);
+    }
+
+    @Test
+    void pushData() {
+        ShareResult shareResult = fabricService.pushData("org2_user", "data2", "hash", "channel1", "channel2","data2_copy");
+
+        System.out.println(shareResult);
+    }
+
+    @Test
+    void pullData() {
+        // 拉取文件
+        ShareResult shareResult = fabricService.pullData("org3_user", "data03", "hash", "channel1", "channel2","data03_copy");
+        System.out.println(shareResult);
+    }
+
+    @Test
+    void traceForwardCrossChain() {
+        Record record = fabricService.traceForwardCrossChain("org5_user", "channel2", "3c6a09b1b965c8ad0215dc1a9113b05213062e895c5070e654341f88d6001041", "channel1");
+        System.out.println(record);
     }
 }

@@ -93,7 +93,13 @@ public class DataAuthorityController {
         Integer channelId = admin.getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();
         for (int i = 0; i < usersDataAuthorityList.size(); i++) {
-            if(!usersDataAuthorityList.get(i).getChannelName().equals(channelName)){
+            User user = userService.findUserById(usersDataAuthorityList.get(i).getUserId());
+            Channel userChannel = channelService.findChannelById(user.getChannelId());
+            DataSample dataSample = dataService.findDataById(usersDataAuthorityList.get(i).getDataId());
+            Channel dataChannel = channelService.findChannelById(dataSample.getChannelId());
+            if(!usersDataAuthorityList.get(i).getChannelName().equals(channelName)||
+                    !userChannel.getChannelName().equals(channelName)||
+                      !dataChannel.getChannelName().equals(channelName)){
                 usersDataAuthorityList.remove(i);
                 i--;
             }

@@ -44,8 +44,8 @@
         select data_sample.id as id,data_sample.channel_id as channelId, data_sample.data_name as dataName, data_sample.data_type as dataType, data_sample.mongo_id as mongoId,
                data_sample.origin_user_id as originUserId, data_sample.created_time as createdTime, data_sample.modified_time as modifiedTime,data_sample.data_size as dataSize,
                GROUP_CONCAT(data_authority.authority_key) as dataAuthorityList 
-        from data_sample  left join data_authority on data_sample.id = data_authority.data_sample_id and data_authority.user_id = 131
-        where data_sample.channel_id = 2
+        from data_sample  left join data_authority on data_sample.id = data_authority.data_sample_id and data_authority.user_id = #{userId}
+        where data_sample.channel_id = #{channelId}
         group by data_sample.id;
     </select>
 </mapper>

@@ -31,7 +31,7 @@
     <!--</select>-->
     <select id="findUsersChannelAuthority" parameterType="Map" resultType="UserChannelAuthDto" >
         select user.id as userId,user.user_name as userName,user.channel_id as channelId,channel.channel_name as channelName,group_concat(channel_authority.authority_key) as authSet
-        from user left join channel_authority on user.id = channel_authority.user_id and user.channel_id = 3 - channel_authority.channel_id join channel on user.channel_id = channel.id
+        from user left join channel_authority on user.id = channel_authority.user_id and user.channel_id = channel_authority.channel_id join channel on user.channel_id = channel.id
         where user.channel_id = #{adminChannelId} and user.is_admin = 0
         group by user.id
 

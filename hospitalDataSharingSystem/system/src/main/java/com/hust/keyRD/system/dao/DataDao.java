@@ -3,6 +3,7 @@ package com.hust.keyRD.system.dao;
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.DataSample;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -27,5 +28,5 @@ public interface DataDao {
      * @param channelId  用户所在channel id
      * @return
      */
-    List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(Integer userId, Integer channelId);
+    List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(@Param("userId") Integer userId, @Param("channelId")Integer channelId);
 }
