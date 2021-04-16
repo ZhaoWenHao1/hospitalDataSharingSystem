@@ -15,6 +15,7 @@ public class UserDataAuthDto {
     private Integer userId;
     private String userName;
     private String channelName;
+    private String hospitalName;
     private Integer dataId;
     private String dataName;
     private String dataAuthorityList;

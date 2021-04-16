@@ -25,8 +25,8 @@ public interface ChannelDataAuthorityDao {
     
     
     ChannelDataAuthority findById(Integer id);
-    
-    
+
+    int countByChannelData(ChannelDataAuthority channelDataAuthority);
 
     List<ChannelDataAuthorityVO> getAuthorityListByType(Integer type);
 

@@ -20,8 +20,6 @@ class AllDataUserAuthorityVOMapperTest {
 
     @Test
     void toAllDataUserAuthorityVO() {
-        UserChannelAuthDto userChannelAuthDto = new UserChannelAuthDto(1,"name",2,"channelName","1,2,3");
-        AllChannelUserVO allDataUserAuthorityVO = AllChannelUserAuthorityVOMapper.INSTANCE.toAllDataUserAuthorityVO(userChannelAuthDto);
-        System.out.println(allDataUserAuthorityVO);
+        
     }
 }

@@ -25,6 +25,8 @@ public class ChannelDataAuthorityVO {
     private Integer userChannelId;
     
     private String userChannelName;
+    
+    private String userHospitalName;
 
     /**
      * 文件id
@@ -36,6 +38,8 @@ public class ChannelDataAuthorityVO {
     private Integer dataChannelId;
     
     private String dataChannelName;
+    
+    private String dataHospitalName;
 
     /**
      * channelID
@@ -43,6 +47,8 @@ public class ChannelDataAuthorityVO {
     private Integer channelId;
     
     private String channelName;
+    
+    private String hospitalName;
 
     /**
      * 权限类型：1-push，2-pull

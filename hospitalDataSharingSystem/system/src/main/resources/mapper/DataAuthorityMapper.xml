@@ -40,7 +40,7 @@
     </select>
 
     <select id="findUsersDataAuthority" parameterType="Map" resultType="UserDataAuthDto">
-        select user.id as userId, user.user_name as userName, channel.channel_name as channelName, data_sample.id as dataId,data_sample.data_name as dataName, group_concat(data_authority.authority_key) as dataAuthorityList
+        select user.id as userId, user.user_name as userName, channel.channel_name as channelName, channel.hospital_name as hospitalName,data_sample.id as dataId,data_sample.data_name as dataName, group_concat(data_authority.authority_key) as dataAuthorityList
         from user join data_sample  left join data_authority on data_authority.user_id = user.id and data_authority.data_sample_id = data_sample.id, channel
         where user.is_admin = 0
             and data_sample.channel_id = channel.id

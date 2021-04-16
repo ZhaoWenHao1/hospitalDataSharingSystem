@@ -88,7 +88,6 @@ public class DataAuthorityController {
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();//授权者Id
         User admin = userService.findUserById(userId);
-        //System.out.println(admin.getChannelId());
         List<UserDataAuthDto> usersDataAuthorityList = dataAuthorityService.findUsersDataAuthority(admin.getChannelId());
         Integer channelId = admin.getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();

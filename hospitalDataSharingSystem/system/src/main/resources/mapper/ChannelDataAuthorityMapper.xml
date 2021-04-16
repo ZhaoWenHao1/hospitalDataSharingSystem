@@ -36,6 +36,10 @@
     <select id="findById" parameterType="Map" resultMap="channelDataAuthorityMap">
         select * from channel_data_authority where id = #{id};
     </select>
+    
+    <select id="countByChannelData" parameterType="Map" resultType="Integer">
+        select count(*) from channel_data_authority where user_id = #{userId} and data_id = #{dataId} and channel_id = #{channelId} and type = #{type}
+    </select>
 
     <select id="getAuthorityListByType" parameterType="Map" resultType="com.hust.keyRD.commons.vo.ChannelDataAuthorityVO">
         select channel_data_authority.user_id    as userId,

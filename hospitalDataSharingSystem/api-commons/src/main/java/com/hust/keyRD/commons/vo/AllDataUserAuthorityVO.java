@@ -17,6 +17,7 @@ public class AllDataUserAuthorityVO {
     private String userName;
     private Integer channelId;
     private String channelName;
+    private String hospitalName;
     private Integer dataId;
     private String dataName;
     private Set<Integer> channelAuthoritySet;

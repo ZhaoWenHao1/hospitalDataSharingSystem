@@ -14,5 +14,6 @@ public class AllChannelUserVO {
     private String userName;
     private Integer channelId;
     private String channelName;
+    private String hospitalName;
     private Set<Integer> channelAuthoritySet;
 }

@@ -22,6 +22,7 @@ public class UserChannelAuthDto {
     private String userName;
     private Integer channelId;
     private String channelName;
+    private String hospitalName;
     private String authSet;
 //    private Integer authorityKey;
 //    private String channelAuthoritySet;

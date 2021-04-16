@@ -55,6 +55,7 @@ public class ChannelDataAuthorityController {
     
     @ApiOperation("添加域间pull权限")
     @PostMapping("addPullAuthority")
+    // TODO : 重复的不能添加
     public CommonResult addInterChannelPullAuthority(@RequestBody ChannelDataAuthority channelDataAuthority, HttpServletRequest httpServletRequest){
         // 判断是否是管理员
         Integer userId = JwtUtil.getUserId(httpServletRequest);
@@ -63,6 +64,10 @@ public class ChannelDataAuthorityController {
             throw new BadRequestException("非管理员");
         }
         String username = userService.findUserById(channelDataAuthority.getUserId()).getUsername();
+        int count = channelDataAuthorityService.countByChannelData(channelDataAuthority);
+        if(count > 0){
+            throw new BadRequestException("重复添加权限");
+        }
        // System.out.println(username);
         // 区块链添加pull权限
         log.info("************fabric增加文件pull权限记录区块链开始*****************");
@@ -76,12 +81,17 @@ public class ChannelDataAuthorityController {
 
     @ApiOperation("添加域间push权限")
     @PostMapping("addPushAuthority")
+    // TODO：重复的不能添加
     public CommonResult addInterChannelPushAuthority(@RequestBody ChannelDataAuthority channelDataAuthority, HttpServletRequest httpServletRequest){
         // 判断是否是管理员
         Integer userId = JwtUtil.getUserId(httpServletRequest);
         User user = userService.findUserById(userId);
         if(user.getIsAdmin() != 1){
             throw new BadRequestException("非管理员");
+        }
+        int count = channelDataAuthorityService.countByChannelData(channelDataAuthority);
+        if(count > 0){
+            throw new BadRequestException("重复添加权限");
         }
         // 区块链添加push权限
         log.info("************fabric增加文件push权限记录区块链开始*****************");

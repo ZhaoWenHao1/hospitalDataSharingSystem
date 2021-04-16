@@ -1,6 +1,7 @@
 package com.hust.keyRD.system.service.impl;
 
 import com.hust.keyRD.commons.Dto.PushDataInfoDto;
+import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.ChannelDataAuthority;
 import com.hust.keyRD.commons.entities.DataSample;
 import com.hust.keyRD.commons.entities.User;
@@ -41,6 +42,11 @@ public class ChannelDataAuthorityServiceImpl implements ChannelDataAuthorityServ
     @Override
     public List<DataSample> getInterChannelPullData(Integer userId, Integer channelId) {
         return channelDataAuthorityDao.getInterChannelPullData(userId, channelId);
+    }
+
+    @Override
+    public int countByChannelData(ChannelDataAuthority channelDataAuthority) {
+        return channelDataAuthorityDao.countByChannelData(channelDataAuthority);
     }
 
     @Override
@@ -87,9 +93,18 @@ public class ChannelDataAuthorityServiceImpl implements ChannelDataAuthorityServ
 
         List<ChannelDataAuthorityVO> pullAuthorityList= channelDataAuthorityDao.getAuthorityListByType(2);
         pullAuthorityList.forEach(channelDataAuthorityVO -> {
-            channelDataAuthorityVO.setUserChannelName(channelService.findChannelById(channelDataAuthorityVO.getUserChannelId()).getChannelName());
-            channelDataAuthorityVO.setDataChannelName(channelService.findChannelById(channelDataAuthorityVO.getDataChannelId()).getChannelName());
-            channelDataAuthorityVO.setChannelName(channelService.findChannelById(channelDataAuthorityVO.getChannelId()).getChannelName());
+            // 用户所在channel
+            Channel userChannel = channelService.findChannelById(channelDataAuthorityVO.getUserChannelId());
+            channelDataAuthorityVO.setUserChannelName(userChannel.getChannelName());
+            channelDataAuthorityVO.setUserHospitalName(userChannel.getHospitalName());
+            // 文件所在channel
+            Channel dataChannel = channelService.findChannelById(channelDataAuthorityVO.getDataChannelId());
+            channelDataAuthorityVO.setDataChannelName(dataChannel.getChannelName());
+            channelDataAuthorityVO.setDataHospitalName(dataChannel.getHospitalName());
+            // push 或 pull的最后一个参数  channel
+            Channel channel = channelService.findChannelById(channelDataAuthorityVO.getChannelId());
+            channelDataAuthorityVO.setChannelName(channel.getChannelName());
+            channelDataAuthorityVO.setHospitalName(channel.getHospitalName());
         });
         return pullAuthorityList;
     }
@@ -98,9 +113,18 @@ public class ChannelDataAuthorityServiceImpl implements ChannelDataAuthorityServ
     public List<ChannelDataAuthorityVO> getPushAuthorityList() {
         List<ChannelDataAuthorityVO> pullAuthorityList= channelDataAuthorityDao.getAuthorityListByType(1);
         pullAuthorityList.forEach(channelDataAuthorityVO -> {
-            channelDataAuthorityVO.setUserChannelName(channelService.findChannelById(channelDataAuthorityVO.getUserChannelId()).getChannelName());
-            channelDataAuthorityVO.setDataChannelName(channelService.findChannelById(channelDataAuthorityVO.getDataChannelId()).getChannelName());
-            channelDataAuthorityVO.setChannelName(channelService.findChannelById(channelDataAuthorityVO.getChannelId()).getChannelName());
+            // 用户所在channel
+            Channel userChannel = channelService.findChannelById(channelDataAuthorityVO.getUserChannelId());
+            channelDataAuthorityVO.setUserChannelName(userChannel.getChannelName());
+            channelDataAuthorityVO.setUserHospitalName(userChannel.getHospitalName());
+            // 文件所在channel
+            Channel dataChannel = channelService.findChannelById(channelDataAuthorityVO.getDataChannelId());
+            channelDataAuthorityVO.setDataChannelName(dataChannel.getChannelName());
+            channelDataAuthorityVO.setDataHospitalName(dataChannel.getHospitalName());
+            // push 或 pull的最后一个参数  channel
+            Channel channel = channelService.findChannelById(channelDataAuthorityVO.getChannelId());
+            channelDataAuthorityVO.setChannelName(channel.getChannelName());
+            channelDataAuthorityVO.setHospitalName(channel.getHospitalName());
         });
         return pullAuthorityList;
     }

@@ -40,6 +40,17 @@ class ChannelAuthorityServiceImplTest {
     
     @Autowired
     private ChannelDataAuthorityDao channelDataAuthorityDao;
+    
+    @Test
+    void  countByChannelDataTest(){
+        ChannelDataAuthority channelDataAuthority = new ChannelDataAuthority();
+        channelDataAuthority.setUserId(142);
+        channelDataAuthority.setDataId(36);
+        channelDataAuthority.setChannelId(1);
+        channelDataAuthority.setType(1);
+        System.out.println(channelDataAuthorityDao.countByChannelData(channelDataAuthority));
+    }
+    
 
     @Test
     void getUserInnerDataListByUserIdAndChannelIdTest(){

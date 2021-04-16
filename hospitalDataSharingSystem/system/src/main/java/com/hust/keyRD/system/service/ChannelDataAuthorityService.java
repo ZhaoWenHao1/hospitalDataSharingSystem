@@ -27,6 +27,13 @@ public interface ChannelDataAuthorityService {
      */
     List<DataSample> getInterChannelPullData(Integer userId, Integer channelId);
 
+    /**
+     * 对同样的权限进行计数
+     * @param channelDataAuthority
+     * @return
+     */
+    int countByChannelData(ChannelDataAuthority channelDataAuthority);
+
     ChannelDataAuthority findById(Integer id);
 
     void deleteById(Integer id);
