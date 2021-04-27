@@ -1,5 +1,6 @@
 package com.hust.keyRD.system.controller;
 
+import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.ChannelDataAuthority;
 import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
@@ -8,6 +9,7 @@ import com.hust.keyRD.commons.utils.JwtUtil;
 import com.hust.keyRD.commons.vo.ChannelDataAuthorityVO;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.service.ChannelDataAuthorityService;
+import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -36,6 +38,8 @@ public class ChannelDataAuthorityController {
     private ChannelDataAuthorityService channelDataAuthorityService;
     @Resource
     private FabricService fabricService;
+    @Resource
+    private ChannelService channelService;
     
     @ApiOperation("获取pull权限列表")
     @RequestMapping("getPullAuthorityList")
@@ -95,7 +99,10 @@ public class ChannelDataAuthorityController {
         }
         // 区块链添加push权限
         log.info("************fabric增加文件push权限记录区块链开始*****************");
-        fabricService.grantInnerChannelPush(channelDataAuthority.getDataId()+"","role1",userService.findUserById(channelDataAuthority.getUserId()).getUsername());
+        Channel targetChannel = channelService.findChannelById(channelDataAuthority.getChannelId());
+        String targetChannelUsername = getUsernameByChannel(targetChannel.getChannelName());
+        // 增加push权限就是增加目标channel对于用户的pull权限
+        fabricService.grantInnerChannelPush(channelDataAuthority.getDataId()+"","role1",targetChannelUsername);
         log.info("************fabric增加文件push权限记录区块链结束*****************");
         channelDataAuthorityService.addPushAuthority(channelDataAuthority);
 
@@ -146,6 +153,14 @@ public class ChannelDataAuthorityController {
         log.info("************fabric删除文件push权限记录区块链结束*****************");
         channelDataAuthorityService.deleteById(channelDataAuthority.getId());
         return new CommonResult(200,"success");
+    }
+
+    private String getUsernameByChannel(String channel){
+        if(channel.equals("channel1")){
+            return "org2_user";
+        }else{
+            return "org5_user";
+        }
     }
     
     

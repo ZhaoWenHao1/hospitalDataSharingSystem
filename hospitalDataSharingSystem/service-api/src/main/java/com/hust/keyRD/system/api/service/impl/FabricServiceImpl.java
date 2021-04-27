@@ -193,7 +193,7 @@ public class FabricServiceImpl implements FabricService {
         }};
         String response = invokeChaincode(requester,peers,channelName,ccName,fcn,args);
         if (response.contains("hash_data")) {
-            log.info("applyForCreateFile {} {} {}成功", requester, type, fileId);
+            log.info("applyForOptFile {} {} {}成功", requester, type, fileId);
             try{
                 // 获取上链事务id
                 ObjectMapper mapper = new ObjectMapper();
@@ -570,7 +570,7 @@ public class FabricServiceImpl implements FabricService {
         String res = invokeChaincode(targetRequester, targetPeers, targetChannelName, ccName, "dstSyncRecord", args);
         System.out.println("目标域二次上链: " + res);
         if(!res.contains("hash_data")){
-            throw new FabricException("pushData 目标域二次上链失败！info: " + res);
+            throw new FabricException("pullData 目标域二次上链失败！info: " + res);
         }
         shareResult.setTargetChannelResponse(res);
         // 发起域二次上链  拉取者所在channel
@@ -578,7 +578,7 @@ public class FabricServiceImpl implements FabricService {
         res = invokeChaincode(requester,peers,requesterChannelName,ccName,"srcSyncRecord",args);
         System.out.println("发起域二次上链: " + res);
         if(!res.contains("hash_data")){
-            throw new FabricException("pushData 发起域二次上链失败！info: " + res);
+            throw new FabricException("pullData 发起域二次上链失败！info: " + res);
         }
         shareResult.setSrcChannelResponse(res);
         return shareResult;
@@ -604,10 +604,10 @@ public class FabricServiceImpl implements FabricService {
         try{
             shareResult = parseShareResultFromResponse(response);
             if(!shareResult.getResult()){
-                throw new FabricException("pullData failed! info: " + response);
+                throw new FabricException("pushData failed! info: " + response);
             }
         }catch (IOException e){
-            throw new FabricException("pullData failed! info: " + response);
+            throw new FabricException("pushData failed! info: " + response);
         }
         // 发起域二次上链  文件所在channel
         args.add(shareResult.getTxId());
@@ -691,6 +691,7 @@ public class FabricServiceImpl implements FabricService {
         return prefix + "@org" + n + ".example.com";
     }
     
+    @Override
     public String getChannelUsernameByChannel(String channel){
         if(channel.equals("channel1")){
             return "User1@org2.example.com";

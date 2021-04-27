@@ -367,7 +367,8 @@ public interface FabricService {
      * @return
      */
     Record traceForwardCrossChain(String requester,String requesterChannelName,String txId, String targetChannelName);
-    
 
+
+    String getChannelUsernameByChannel(String channel);
     
 }

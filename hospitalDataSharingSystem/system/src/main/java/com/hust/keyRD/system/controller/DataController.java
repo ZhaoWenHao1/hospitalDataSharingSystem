@@ -1,6 +1,7 @@
 package com.hust.keyRD.system.controller;
 
 import com.auth0.jwt.JWT;
+import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
 import com.hust.keyRD.commons.utils.JwtUtil;
@@ -304,13 +305,14 @@ public class DataController {
         User user = userService.findUserById(userId);
         Integer checkAuthorityCount = channelDataAuthorityService.checkPullAuthority(userId,dataId,channelId);
         if(checkAuthorityCount>=1){
-            Optional<FileModel> fileModel = fileService.getFileById(dataService.findDataById(dataId).getMongoId());
-            FileModel newFileModel = fileService.copyFile(fileModel.get());//获取新文件,已经保存至mangodb中
+            DataSample dataSample = dataService.findDataById(dataId);
+            Optional<FileModel> fileModel = fileService.getFileById(dataSample.getMongoId());
+            FileModel newFileModel = fileService.copyFile(fileModel.    get());//获取新文件,已经保存至mangodb中
             //将新文件保存至数据库，文件channelId为该用户所在的channelId
             DataSample newDataSample = new DataSample();
             newDataSample.setChannelId(user.getChannelId());
             newDataSample.setMongoId(newFileModel.getId());
-            newDataSample.setDataName(newFileModel.getName());
+            newDataSample.setDataName(dataSample.getDataName() + "_copy");
             newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
             //初次创建时将初始时间和修改时间写成一样
             newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
@@ -328,6 +330,12 @@ public class DataController {
             //写入上传者权限
             dataAuthorityService.addMasterDataAuthority(userId, newDataSample.getId());
             //TODO fabric操作
+            String requester = user.getUsername();
+            String requesterChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
+            String targetChannelName = channelService.findChannelById(channelId).getChannelName();
+
+            ShareResult shareResult = fabricService.pullData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
+            log.info(shareResult.toString());
 
             return new CommonResult<>(200, "success", newDataSample);
         }else {
@@ -350,13 +358,14 @@ public class DataController {
         User user = userService.findUserById(userId);
         Integer checkAuthorityCount = channelDataAuthorityService.checkPushAuthority(userId,dataId,channelId);
         if(checkAuthorityCount>=1){
-            Optional<FileModel> fileModel = fileService.getFileById(dataService.findDataById(dataId).getMongoId());
+            DataSample dataSample = dataService.findDataById(dataId);
+            Optional<FileModel> fileModel = fileService.getFileById(dataSample.getMongoId());
             FileModel newFileModel = fileService.copyFile(fileModel.get());//获取新文件,已经保存至mangodb中
             //将新文件保存至数据库，文件channelId为对应channelId
             DataSample newDataSample = new DataSample();
             newDataSample.setChannelId(channelId);
             newDataSample.setMongoId(newFileModel.getId());
-            newDataSample.setDataName(newFileModel.getName());
+            newDataSample.setDataName(dataSample.getDataName() + "_copy");
             newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
             //初次创建时将初始时间和修改时间写成一样
             newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
@@ -373,6 +382,12 @@ public class DataController {
             dataService.uploadFile(newDataSample);//上传至数据库
             //不写入上传者权限！
             //TODO fabric操作
+            String requester = user.getUsername();
+            String requesterChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
+            String targetChannelName = channelService.findChannelById(channelId).getChannelName();
+
+            ShareResult shareResult = fabricService.pushData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
+            log.info(shareResult.toString());
 
             return new CommonResult<>(200, "success", newDataSample);
         }else {
@@ -469,6 +484,8 @@ public class DataController {
         }
         return new CommonResult<>(200, "获取该用户所有文件列表成功", result);
     }
+    
+    
     
     
 }
