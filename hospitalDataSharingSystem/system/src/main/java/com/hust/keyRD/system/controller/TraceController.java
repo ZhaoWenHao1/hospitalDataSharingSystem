@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -76,21 +77,38 @@ public class TraceController {
     @PostMapping(value = "/trace/traceBackwardForAll")
     public CommonResult traceBackwardForAll(@RequestBody Map<String, String> params,HttpServletRequest httpServletRequest){
         String dataId = params.get("dataId");
-        List<Record> result = new LinkedList<>();
+//        List<Record> result = new LinkedList<>();
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(userId);
         Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();
-        Record record = fabricService.traceBackward(user.getUsername(),channelName,dataId);//这是最新一次的操作记录
-        result.add(record);
-        Record tmp = record;
-        while(!tmp.getLastTxId().equals("0")){
-            String thisTxId = tmp.getThisTxId();
-            tmp = fabricService.traceBackward(user.getUsername(),channelName,dataId,thisTxId);
-            result.add(tmp);
+        List<Record> records = traceBackwardAll(user.getUsername(), channelName, dataId);
+        String fileName = "";
+        List<RecordVO> recordVOList = new ArrayList<>();
+        for (Record record : records) {
+            record.setUser(user.getUsername());
+            RecordVO recordVO = new RecordVO();
+            recordVO.setRecord(record);
+            // todo
+            if(fileName.isEmpty()){
+                fileName = dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName();
+            }
+            recordVO.setFileName(fileName);
+            recordVOList.add(recordVO);
         }
-        return new CommonResult<>(200,"获取该文件的所有溯源记录成功",result);
+        return new CommonResult<>(200,"获取该文件的所有溯源记录成功",recordVOList);
+    }
+    
+    private List<Record> traceBackwardAll(String requester, String channelName, String fileId) {
+        List<Record> ans = new ArrayList<>();
+        Record record = fabricService.traceBackward(requester, channelName, fileId);
+        ans.add(record);
+        while (!record.getLastTxId().equals("0")) {
+            record = fabricService.traceBackward(requester,channelName,fileId, record.getThisTxId());
+            ans.add(record);
+        }
+        return ans;
     }
 
 }

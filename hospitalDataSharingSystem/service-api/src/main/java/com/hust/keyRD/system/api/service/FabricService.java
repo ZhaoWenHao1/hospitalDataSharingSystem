@@ -2,6 +2,8 @@ package com.hust.keyRD.system.api.service;
 
 import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.Record;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
@@ -146,6 +148,16 @@ public interface FabricService {
      */
     String applyForModifyFile(String requester, String channelName,String fileHash, String fileId);
 
+    /**
+     * 申请域内下载文件权限  第一次上链
+     * @param requester 调用者
+     * @param channelName 调用者所在channel
+     * @param fileHash 文件hash
+     * @param fileId 文件id
+     * @return
+     */
+    String applyForDownloadFile(String requester, String channelName,String fileHash, String fileId);
+
 
     /**
      * 创建文件时 更新链上文件hash值  第二次上链
@@ -181,6 +193,18 @@ public interface FabricService {
      */
     String updateForModifyFile(String requester, String channelName,String fileHash, String fileId,String txId);
 
+
+    /**
+     * 下载文件时 更新链上文件hash值  第二次上链
+     * @param requester 调用者
+     * @param channelName 调用者所在channel
+     * @param fileHash 文件hash
+     * @param fileId 文件id
+     * @param txId 第一次上链事务号
+     * @return
+     */
+    String updateForDownloadFile(String requester, String channelName,String fileHash, String fileId,String txId);
+
     
 
     /**
@@ -193,6 +217,7 @@ public interface FabricService {
      * @param txId 第一次上链事务号
      * @return
      */
+//    @CacheEvict(cacheNames = "traceAll", key = "#fileId")
     String dataSyncRecord(String requester, String channelName,String fileHash, String fileId,String typeTx, String txId);
 
     /**
@@ -227,6 +252,7 @@ public interface FabricService {
      * @param txId
      * @return
      */
+    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
     Record traceBackward(String requester, String channelName, String fileId, String txId);
 
     /**
@@ -237,6 +263,7 @@ public interface FabricService {
      * @return
      */
     // TODO: check
+//    @Cacheable(key = "#fileId", cacheNames = "traceAll")
     List<Record> traceBackwardAll(String requester, String channelName, String fileId);
 
     /**

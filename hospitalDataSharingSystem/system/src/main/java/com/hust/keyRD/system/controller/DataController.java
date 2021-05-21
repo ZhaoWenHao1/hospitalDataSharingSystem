@@ -11,6 +11,7 @@ import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.UserInnerDataVO;
 import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
+import com.hust.keyRD.system.constant.DataAuthorityConstant;
 import com.hust.keyRD.system.dao.ChannelDataAuthorityDao;
 import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
@@ -21,12 +22,16 @@ import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.system.service.*;
 import com.hust.keyRD.commons.vo.DataUserAuthorityVO;
 import org.bson.types.Binary;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
@@ -459,6 +464,50 @@ public class DataController {
         log.info("************fabric更新文件操作记录区块链结束*****************");
         return new CommonResult<>(200, "id为：" + dataId + "的文件更新成功\r\ntxId：" + txId, null);
     }
+
+    //根据文件id下载文件
+    @GetMapping(value = "/data/downloadData")
+    @ResponseBody
+    @Transactional
+    public ResponseEntity<Object> downloadData(@RequestParam("dataId") Integer dataId, @RequestParam("token") String token,HttpServletRequest httpServletRequest, HttpServletResponse response) throws UnsupportedEncodingException {
+        // 从 http 请求头中取出 token
+        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        User user = userService.findUserById(originUserId);
+        DataSample dataSample = dataService.findDataById(dataId);
+        if (dataSample == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not found");
+        }
+        if(dataAuthorityService.checkDataAuthority(new DataAuthority(null,originUserId,dataId, DataAuthorityConstant.AUTHORITY_DOWNLOAD)) < 1){
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权限");
+        }
+        log.info("************fabric下载文件操作记录区块链开始*****************");
+        // 1. 申请读取权限
+        String username = user.getUsername();
+        String dstChannelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
+        String srcChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
+        String txId = fabricService.applyForDownloadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId));
+        if (txId == null || txId.isEmpty()) {
+            log.info("申请文件下载权限失败");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权限");
+        }
+        // 2. 读取文件
+        Optional<FileModel> file = fileService.getFileById(dataSample.getMongoId());
+        // 3. 二次上链
+        String record = fabricService.updateForDownloadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId), txId);
+        log.info("2. 二次上链 ： " + record);
+        log.info("************fabric下载文件操作记录区块链结束*****************");
+        if (file.isPresent()) {
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; fileName=" + new String(file.get().getName().getBytes("utf-8"), "ISO-8859-1"))
+                    .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
+                    .header(HttpHeaders.CONTENT_LENGTH, file.get().getSize() + "").header("Connection", "close")
+                    .body(file.get().getContent().getData());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not found");
+        }
+
+    }
+    
 
     //根据上传者id获取文件列表
     @CheckToken

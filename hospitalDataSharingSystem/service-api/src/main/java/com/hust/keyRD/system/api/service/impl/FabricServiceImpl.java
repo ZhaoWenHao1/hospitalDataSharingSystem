@@ -12,6 +12,8 @@ import com.hust.keyRD.system.api.service.FabricService;
 import feign.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -238,6 +240,11 @@ public class FabricServiceImpl implements FabricService {
         return applyForOptFile(requester, channelName, fileHash, fileId, "modify");
     }
 
+    @Override
+    public String applyForDownloadFile(String requester, String channelName, String fileHash, String fileId) {
+        return applyForOptFile(requester, channelName, fileHash, fileId, "download");
+    }
+
 //    // 二次上链
 //    private Record updateForOptFile(String fileString, String srcChannelName, String username, String dstChannelName, String fileId, String txId, String opt) {
 //        String hashSHA1 = HashUtil.hash(fileString, "SHA1");
@@ -288,8 +295,14 @@ public class FabricServiceImpl implements FabricService {
         return dataSyncRecord(requester,channelName,fileHash,fileId,"modify",txId);
     }
 
+    @Override
+    public String updateForDownloadFile(String requester, String channelName, String fileHash, String fileId, String txId) {
+        return dataSyncRecord(requester,channelName,fileHash,fileId,"download",txId);
+    }
+
 
     @Override
+//    @CacheEvict(cacheNames = "traceAll", key = "#fileId")
     public String dataSyncRecord(String requester, String channelName,String fileHash, String fileId, String typeTx,String txId) {
         String peers = getPeers(requester);
         String channelUserName = getChannelUsername(requester);
@@ -385,6 +398,7 @@ public class FabricServiceImpl implements FabricService {
     }
 
     @Override
+    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
     public Record traceBackward(String requester, String channelName, String fileId, String txId) {
         String peers = getPeers(requester);
         String fcn = "traceBackward";
@@ -420,6 +434,11 @@ public class FabricServiceImpl implements FabricService {
             record = traceBackward(requester,channelName,fileId, record.getThisTxId());
             ans.add(record);
         }
+//        int count = 3;
+//        while (!record.getLastTxId().equals("0") && --count > 0) {
+//            record = traceBackward(requester,channelName,fileId, record.getThisTxId());
+//            ans.add(record);
+//        }
         return ans;
     }
 

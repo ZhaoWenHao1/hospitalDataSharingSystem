@@ -11,6 +11,7 @@
         <module>api-commons</module>
         <module>system</module>
         <module>service-api</module>
+        <module>sgx-simulator</module>
     </modules>
     <packaging>pom</packaging>
 
