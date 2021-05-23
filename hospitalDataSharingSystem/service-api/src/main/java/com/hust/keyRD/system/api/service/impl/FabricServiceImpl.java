@@ -2,6 +2,7 @@ package com.hust.keyRD.system.api.service.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hust.keyRD.common.redis.annotation.RedisCache;
 import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.Record;
 import com.hust.keyRD.commons.exception.fabric.FabricException;
@@ -13,7 +14,6 @@ import feign.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -398,7 +398,8 @@ public class FabricServiceImpl implements FabricService {
     }
 
     @Override
-    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
+//    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
+    @RedisCache(key = "trace", fieldKey = "#fileId + '#' + #txId", expired = 3600 * 24 * 7)
     public Record traceBackward(String requester, String channelName, String fileId, String txId) {
         String peers = getPeers(requester);
         String fcn = "traceBackward";

@@ -1,5 +1,6 @@
 package com.hust.keyRD.system.api.service;
 
+import com.hust.keyRD.common.redis.annotation.RedisCache;
 import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.Record;
 import org.springframework.cache.annotation.CacheEvict;
@@ -252,7 +253,8 @@ public interface FabricService {
      * @param txId
      * @return
      */
-    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
+//    @Cacheable(key = "#fileId + '#' + #txId ", cacheNames = "traceBackward")
+//    @RedisCache(key = "trace", fieldKey = "#fileId + '#' + #txId", expired = 3600 * 24 * 7)
     Record traceBackward(String requester, String channelName, String fileId, String txId);
 
     /**

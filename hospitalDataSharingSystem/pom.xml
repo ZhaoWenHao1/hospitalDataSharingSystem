@@ -12,6 +12,7 @@
         <module>system</module>
         <module>service-api</module>
         <module>sgx-simulator</module>
+        <module>common-redis</module>
     </modules>
     <packaging>pom</packaging>
 
@@ -29,6 +30,7 @@
         <jackson.version>2.9.3</jackson.version>
         <swagger.version>2.9.2</swagger.version>
         <mapstruct.version>1.2.0.Final</mapstruct.version>
+        <spring.version>2.2.2.RELEASE</spring.version>
     </properties>
     <!--子模块继承之后，提供作用：锁定版本+子模块module不用写groupId和version-->
     <!--dependencyManagement只是定义依赖，而不引入依赖，在子项目中也要指定依赖，不用指定版本号（父项目已经指定）-->
@@ -39,7 +41,7 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
-                <version>2.2.2.RELEASE</version>
+                <version>${spring.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -78,6 +80,18 @@
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis.spring.boot.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-data-redis</artifactId>
+                <version>${spring.version}</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-starter-aop</artifactId>
+                <version>${spring.version}</version>
             </dependency>
             
             <dependency>
