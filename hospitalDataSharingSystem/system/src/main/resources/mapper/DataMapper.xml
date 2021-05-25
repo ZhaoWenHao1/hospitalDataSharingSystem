@@ -32,7 +32,7 @@
         select * from data_sample where id=#{id};
     </select>
     <update id="updateFile" parameterType="DataSample">
-        update data_sample set mongo_id=#{mongoId},data_size=#{dataSize},modified_time=#{modifiedTime}
+        update data_sample set mongo_id=#{mongoId},data_size=#{dataSize},modified_time=#{modifiedTime},shared_count=#{sharedCount}
         where id=#{id}
     </update>
     <!--获取文件列表-->

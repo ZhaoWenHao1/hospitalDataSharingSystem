@@ -22,6 +22,9 @@ public interface DataService {
     //获取文件列表
     List<DataSample> getDataListByOriginUserId(Integer originUserId);
     
+    // 文件共享次数加一
+    void sharedCountIncrease(Integer dataId);
+    
     // 获得用户对用户所在channel所有文件的权限
 
     /**

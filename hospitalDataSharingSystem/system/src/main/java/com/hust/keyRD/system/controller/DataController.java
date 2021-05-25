@@ -354,6 +354,7 @@ public class DataController {
     // 当前用户将用户所在channel的dataId push到channelId上
     @ApiOperation("当前用户将用户所在channel的dataId push到channelId上")
     @PostMapping("/data/pushData")
+    @Transactional(rollbackFor = Exception.class)
     public CommonResult pushData(@RequestBody Map<String, String> params,HttpServletRequest httpServletRequest){
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
@@ -390,6 +391,7 @@ public class DataController {
             newDataSample.setDataSize(size);
             newDataSample.setOriginUserId(targetUserId);
             dataService.uploadFile(newDataSample);//上传至数据库
+            dataService.sharedCountIncrease(dataId);
             //不写入上传者权限！
             log.info("************fabric push文件操作记录区块链开始*****************");
             String requester = user.getUsername();
@@ -398,7 +400,7 @@ public class DataController {
 
             ShareResult shareResult = fabricService.pushData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
             log.info(shareResult.toString());
-            og.info("************fabric push文件操作记录区块链结束*****************");
+            log.info("************fabric push文件操作记录区块链结束*****************");
             return new CommonResult<>(200, "success", newDataSample);
         }else {
             return new CommonResult<>(400, "您没有上传该文件到对于通道的权限", null);

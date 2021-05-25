@@ -67,6 +67,14 @@ public class DataServiceImpl implements DataService
     }
 
     @Override
+    public void sharedCountIncrease(Integer dataId) {
+        DataSample dataSample = dataDao.findDataById(dataId);
+        int sharedCount = dataSample.getSharedCount();
+        dataSample.setSharedCount(++sharedCount);
+        dataDao.updateFile(dataSample);
+    }
+
+    @Override
     public List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(Integer userId, Integer channelId) {
         return dataDao.getUserInnerDataListByUserIdAndChannelId(userId, channelId);
     }
