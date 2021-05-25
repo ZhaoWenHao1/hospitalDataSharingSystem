@@ -76,6 +76,7 @@ public class DataServiceImpl implements DataService
         User user = userService.findUserById(userId);
         List<UserInnerDataDto> userInnerDataList = dataService.getUserInnerDataListByUserIdAndChannelId(user.getId(), user.getChannelId());
         List<UserInnerDataVO> userInnerDataVOList = userInnerDataList.stream().map(UserInnerDataVOMapper.INSTANCE::toUserInnerDataVO).collect(Collectors.toList());
+        // 查询push权限
         Map<Integer, UserInnerDataVO> map = new HashMap<Integer, UserInnerDataVO>();
         userInnerDataVOList.forEach(userInnerDataVO -> map.put(userInnerDataVO.getId(), userInnerDataVO));
         List<PushDataInfoDto> innerChannelPushData = channelDataAuthorityService.getInnerChannelPushData(user.getId(), user.getChannelId());

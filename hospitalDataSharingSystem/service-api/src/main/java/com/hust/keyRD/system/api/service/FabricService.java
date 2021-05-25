@@ -385,6 +385,8 @@ public interface FabricService {
      */
     ShareResult pushData(String requester, String dataId, String dataHash, String requesterChannelName, String targetChannelName, String copyDataId);
 
+    ShareResult pushData(String requester, String dataId, String dataHash, String requesterChannelName, String targetChannelName, String targetChannelUsername,String copyDataId);
+
 
 
     /**

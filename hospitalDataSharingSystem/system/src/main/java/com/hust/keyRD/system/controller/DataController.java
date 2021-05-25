@@ -1,6 +1,7 @@
 package com.hust.keyRD.system.controller;
 
 import com.auth0.jwt.JWT;
+import com.hust.keyRD.commons.Dto.PushDataInfoDto;
 import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
@@ -10,6 +11,7 @@ import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.UserInnerDataVO;
 import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
+import com.hust.keyRD.commons.vo.mapper.UserInnerDataVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.constant.DataAuthorityConstant;
 import com.hust.keyRD.system.dao.ChannelDataAuthorityDao;
@@ -358,8 +360,11 @@ public class DataController {
         Integer userId = JWT.decode(token).getClaim("id").asInt();
         // 所pull的文件Id
         Integer dataId = Integer.valueOf(params.get("dataId"));
-        // 目标channelId 要发送到该channel上
+        // 目标channelId 要发送到该channel上   
+        // TODO：后来改为用户id 故需获得用户所在channelId
         Integer channelId = Integer.valueOf(params.get("channelId"));
+        Integer targetUserId = Integer.valueOf(params.get("userId"));
+//        channelId = userService.findUserById(userId).getChannelId();
         User user = userService.findUserById(userId);
         Integer checkAuthorityCount = channelDataAuthorityService.checkPushAuthority(userId,dataId,channelId);
         if(checkAuthorityCount>=1){
@@ -383,17 +388,17 @@ public class DataController {
             size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             // 此时size就是保留两位小数的浮点数
             newDataSample.setDataSize(size);
-            newDataSample.setOriginUserId(userId);
+            newDataSample.setOriginUserId(targetUserId);
             dataService.uploadFile(newDataSample);//上传至数据库
             //不写入上传者权限！
-            //TODO fabric操作
+            log.info("************fabric push文件操作记录区块链开始*****************");
             String requester = user.getUsername();
             String requesterChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
             String targetChannelName = channelService.findChannelById(channelId).getChannelName();
 
             ShareResult shareResult = fabricService.pushData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
             log.info(shareResult.toString());
-
+            og.info("************fabric push文件操作记录区块链结束*****************");
             return new CommonResult<>(200, "success", newDataSample);
         }else {
             return new CommonResult<>(400, "您没有上传该文件到对于通道的权限", null);
@@ -516,20 +521,35 @@ public class DataController {
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
-        List<DataSample> list = dataService.getDataListByOriginUserId(userId);
+        User user = userService.findUserById(userId);
+        List<DataSample> dataList = dataService.getDataListByOriginUserId(userId);
         List<DataUserAuthorityVO> result = new ArrayList<>();
-        for (int i = 0; i < list.size(); i++) {
-            DataSample dataSample = list.get(i);
+        for (int i = 0; i < dataList.size(); i++) {
+            DataSample dataSample = dataList.get(i);
             DataUserAuthorityVO dataUserAuthorityVO = new DataUserAuthorityVO();
             dataUserAuthorityVO.setDataSample(dataSample);
             dataUserAuthorityVO.setChannelName(channelService.findChannelById(dataSample.getChannelId()).getChannelName());
-            List<DataAuthority> list1 = dataAuthorityService.findDataAuthorityByDataId(dataSample.getId());
+            List<DataAuthority> list1 = dataAuthorityService.findDataAuthorityByUserIdAndDataId(userId,dataSample.getId());
             Set<Integer> authorities = new HashSet<>();
             for (int j = 0; j < list1.size(); j++) {
                 authorities.add(list1.get(j).getAuthorityKey());
             }
             dataUserAuthorityVO.setAuthoritySet(authorities);
             result.add(dataUserAuthorityVO);
+        }
+        // 查询push权限
+        Map<Integer,DataUserAuthorityVO> map = new HashMap<>();
+        result.forEach(dataUserAuthorityVO -> map.put(dataUserAuthorityVO.getDataSample().getId(), dataUserAuthorityVO));
+        List<PushDataInfoDto> innerChannelPushData = channelDataAuthorityService.getInnerChannelPushData(user.getId(), user.getChannelId());
+        for (PushDataInfoDto pushDataInfoDto : innerChannelPushData) {
+            Integer dataId = pushDataInfoDto.getDataId();
+            DataUserAuthorityVO dataUserAuthorityVO = map.get(dataId);
+            if(dataUserAuthorityVO != null){
+                if(dataUserAuthorityVO.getPushChannelSet() == null){
+                    dataUserAuthorityVO.setPushChannelSet(new HashSet<>());
+                }
+                dataUserAuthorityVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(),pushDataInfoDto.getChannelName(), pushDataInfoDto.getHospitalName()));
+            }
         }
         return new CommonResult<>(200, "获取该用户所有文件列表成功", result);
     }

@@ -1,6 +1,7 @@
 package com.hust.keyRD.system.service.impl;
 
 import com.hust.keyRD.commons.entities.Channel;
+import com.hust.keyRD.system.dao.ChannelDao;
 import com.hust.keyRD.system.dao.UserDao;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.system.service.ChannelService;
@@ -18,7 +19,7 @@ public class UserServiceImpl implements UserService {
     @Resource
     private UserDao userDao;
     @Resource
-    private ChannelService channelService;
+    private ChannelDao channelDao;
 
     @Override
     public List<User> getAllUser() {
@@ -33,6 +34,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findUserByUsername(String username) {
         return userDao.findUserByUsername(username);
+    }
+
+    @Override
+    public List<User> findUserByChannel(List<Integer> channels) {
+        return userDao.findUserByChannel(channels);
     }
 
     @Override
@@ -60,7 +66,7 @@ public class UserServiceImpl implements UserService {
         Map<Integer, List<User>> collect = allUser.stream().collect(Collectors.groupingBy(User::getChannelId));
         Map<Channel, List<User>> result = new HashMap<>();
         collect.forEach((k,v) -> {
-            Channel channel = channelService.findChannelById(k);
+            Channel channel = channelDao.findChannelById(k);
             result.put(channel, v);
         });
         return result;

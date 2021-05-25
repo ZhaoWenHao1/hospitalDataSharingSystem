@@ -36,6 +36,8 @@ public class UserInnerDataDto {
     
     private Timestamp modifiedTime;
     
+    private Integer sharedCount;
+    
     private String dataAuthorityList;
 
     /**

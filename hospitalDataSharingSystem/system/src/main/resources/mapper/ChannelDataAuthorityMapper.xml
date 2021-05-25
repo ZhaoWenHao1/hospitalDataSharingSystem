@@ -79,6 +79,10 @@
                           and channel_data_authority.data_id = data_sample.id
                  join channel on channel.id = channel_data_authority.channel_id;
     </select>
+    
+    <select id="findPushableChannelId" parameterType="Map" resultType="Integer">
+        select channel_id from channel_data_authority where user_id = #{userId} and data_id = #{dataId} and type = 1;
+    </select>
 
     <select id="checkPullAuthority" parameterType="DataSample" resultType="java.lang.Integer">
         select count(*) from channel_data_authority

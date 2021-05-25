@@ -2,6 +2,7 @@ package com.hust.keyRD.system.dao;
 
 import com.hust.keyRD.commons.entities.User;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 
@@ -13,6 +14,8 @@ public interface UserDao {
     User findUserById(Integer id);
     //根据username查用户
     User findUserByUsername(String username);
+    // 获取channels中的用户
+    List<User> findUserByChannel(@Param("channels") List<Integer> channels);
     //用户登录
     Integer login(User user);
     //用户注册

@@ -55,6 +55,11 @@ public class ChannelDataAuthorityServiceImpl implements ChannelDataAuthorityServ
     }
 
     @Override
+    public List<Integer> findPushableChannelId(Integer userId, Integer dataId) {
+        return channelDataAuthorityDao.findPushableChannelId(userId, dataId);
+    }
+
+    @Override
     public ChannelDataAuthority addPullAuthority(ChannelDataAuthority channelDataAuthority) {
         if(channelDataAuthority.getType() != 2){
             throw new BadRequestException("addPullAuthority fail, no pull type");

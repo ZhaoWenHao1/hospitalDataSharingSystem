@@ -27,6 +27,7 @@ public class UserInnerDataVO {
     private Integer originUserId;
     private Timestamp createdTime;
     private Timestamp modifiedTime;
+    private Integer sharedCount;
     private Set<Integer> dataAuthoritySet;
     private Set<Channel> pushChannelSet; 
 

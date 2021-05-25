@@ -12,6 +12,10 @@ public interface UserService {
     User findUserById(Integer id);
     //根据username查用户
     User findUserByUsername(String username);
+    
+    // 获取channels中的用户
+    List<User> findUserByChannel(List<Integer> channels);
+    
     //用户登录
     boolean login(User user);
     //用户注册

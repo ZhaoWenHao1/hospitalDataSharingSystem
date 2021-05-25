@@ -48,8 +48,8 @@ public class DataAuthorityController {
         DataSample dataSample = dataService.findDataById(dataSampleId);
         if(user==null) return new CommonResult<>(400,"添加权限失败，不存在userId为："+userId+"的用户",null);
         if(dataSample ==null) return new CommonResult<>(400,"添加权限失败，不存在dataSampleId为："+dataSampleId+"的文件",null);
-        if(authorityKey!=1&&authorityKey!=2&&authorityKey!=3) return new CommonResult<>(400,"authorityKey请选择：" +
-                "用户权限 1代表查看文件 2代表修改文件 3代表删除文件",null);
+        if(authorityKey < 1 || authorityKey > 4) return new CommonResult<>(400,"authorityKey请选择：" +
+                "用户权限 1代表查看文件 2代表修改文件 3代表删除文件 4代表下载文件",null);
         log.info("************fabric添加文件权限操作记录写入区块链开始*****************");
         grantPermissionService.grantUserPermissionOnFile(dataAuthority);
         dataAuthorityService.addDataAuthority(dataAuthority);
@@ -69,7 +69,7 @@ public class DataAuthorityController {
         if(user==null) return new CommonResult<>(400,"添加权限失败，不存在userId为："+userId+"的用户",null);
         if(dataSample ==null) return new CommonResult<>(400,"添加权限失败，不存在dataSampleId为："+dataSampleId+"的文件",null);
 
-        if(authorityKey!=1&&authorityKey!=2&&authorityKey!=3) return new CommonResult<>(400,"authorityKey请选择：" +
+        if(authorityKey < 1 || authorityKey > 4) return new CommonResult<>(400,"authorityKey请选择：" +
                 "用户权限 1代表查看文件 2代表修改文件 3代表删除文件",null);
         log.info("************fabric撤销文件权限操作记录区块链开始*****************");
         if(!grantPermissionService.revokeUserPermissionOnFile(dataAuthority)){

@@ -25,6 +25,7 @@ public interface DataAuthorityDao {
     //查找某一个文件的所有权限
     List<DataAuthority> findDataAuthorityByDataId(Integer dataSampleId);
 
+
     //根据用户id和文件id查询权限
     List<DataAuthority> findDataAuthorityByUserIdAndDataId(@Param("userId") Integer userId, @Param("dataSampleId") Integer dataSampleId);
 

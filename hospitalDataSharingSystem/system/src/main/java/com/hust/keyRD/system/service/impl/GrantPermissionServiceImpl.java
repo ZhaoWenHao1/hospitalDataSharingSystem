@@ -53,6 +53,9 @@ public class GrantPermissionServiceImpl implements GrantPermissionService {
             case 3:
                 permission = "delete";
                 break;
+            case 4:
+                permission = "download";
+                break;
             default:
                 log.info("授权用户权限失败：invalid AuthorityKey");
                 return false;
@@ -77,6 +80,9 @@ public class GrantPermissionServiceImpl implements GrantPermissionService {
                 break;
             case 3:
                 permission = "delete";
+                break;
+            case 4:
+                permission = "download";
                 break;
             default:
                 log.info("撤销用户权限失败：invalid AuthorityKey");

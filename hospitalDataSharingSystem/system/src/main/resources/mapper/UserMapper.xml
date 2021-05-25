@@ -18,6 +18,13 @@
     <select id="findUserByUsername" parameterType="String" resultMap="BaseResultMap">
         select * from user where user_name=#{username};
     </select>
+    <select id="findUserByChannel"  resultMap="BaseResultMap">
+        select *
+        from user where channel_id in 
+            <foreach collection="channels"  item="id" index="index" open="(" close=")" separator=",">
+                #{id}
+            </foreach>
+    </select>
     <!--找所有User-->
     <select id="getAllUser" parameterType="Map" resultMap="BaseResultMap" >
         select id,user_name,channel_id from user where is_admin=0 ORDER BY user_name;

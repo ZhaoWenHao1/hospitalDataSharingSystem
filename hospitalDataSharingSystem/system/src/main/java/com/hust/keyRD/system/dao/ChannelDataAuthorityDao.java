@@ -48,6 +48,15 @@ public interface ChannelDataAuthorityDao {
     List<PushDataInfoDto> getInnerChannelPushData(@Param("userId")Integer userId, @Param("channelId") Integer channelId);
 
 
+
+    /**
+     * 查询用户userId可将dataId push到哪些channel
+     * @param userId
+     * @param dataId
+     * @return
+     */
+    List<Integer> findPushableChannelId(@Param("userId") Integer userId, @Param("dataId") Integer dataId);
+    
     /**
      *
      * @param userId 拉取者的id

@@ -20,4 +20,5 @@ public class DataSample implements Serializable {
     private Integer originUserId;
     private Timestamp createdTime;
     private Timestamp modifiedTime;
+    private Integer sharedCount;
 }

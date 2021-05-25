@@ -606,9 +606,15 @@ public class FabricServiceImpl implements FabricService {
 
     @Override
     public ShareResult pushData(String requester, String dataId, String dataHash, String requesterChannelName, String targetChannelName, String copyDataId) {
-        String peers = getPeers(requester);
         // 根据channel获取该channel的一个用户名
         String targetChannelUsername = getChannelUsernameByChannel(targetChannelName);
+        return pushData(requester,dataId,dataHash, requesterChannelName, targetChannelName, targetChannelUsername, copyDataId);
+    }
+
+    @Override
+    public ShareResult pushData(String requester, String dataId, String dataHash, String requesterChannelName, String targetChannelName, String targetChannelUsername, String copyDataId) {
+        String peers = getPeers(requester);
+        // 根据channel获取该channel的一个用户名
         String fcn = "srcAuditRecord";
         String ccName = "record";
         List<String> args = new ArrayList<String>(){{
@@ -646,7 +652,7 @@ public class FabricServiceImpl implements FabricService {
             targetRequester = "org2_user";
         }
         String targetPeers = getPeers(targetRequester);
-        
+
         args.set(4, copyDataId);
         res = invokeChaincode(targetRequester, targetPeers, targetChannelName, ccName, "dstSyncRecord", args);
         System.out.println("目标域二次上链: " + res);

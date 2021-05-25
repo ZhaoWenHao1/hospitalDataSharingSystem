@@ -5,24 +5,19 @@ import com.auth0.jwt.JWT;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.vo.UserChannelVO;
-import com.hust.keyRD.system.service.ChannelService;
-import com.hust.keyRD.system.service.DataAuthorityService;
-import com.hust.keyRD.system.service.SharedDataAuthorityService;
+import com.hust.keyRD.system.service.*;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import com.hust.keyRD.commons.myAnnotation.LoginToken;
-import com.hust.keyRD.system.service.UserService;
 import com.hust.keyRD.commons.utils.JwtUtil;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestController
@@ -35,6 +30,10 @@ public class UserController{
     private DataAuthorityService dataAuthorityService;
     @Resource
     private SharedDataAuthorityService sharedDataAuthorityService;
+    @Resource
+    private ChannelDataAuthorityService channelDataAuthorityService;
+    @Resource
+    private DataService dataService;
     //登录
     @PostMapping(value = "/user/login")
     @LoginToken
@@ -99,6 +98,22 @@ public class UserController{
             }
             else return new CommonResult<>(400,"注册失败,请联系系统管理员",null);
     }
+    
+    // 获取可以push的用户
+    // 例如 userA可以将file1 push到channel2上，则返回channel2上的用户
+    @CheckToken
+    @GetMapping(value = "/user/getSharedUserOnPush")
+    public CommonResult getSharedUserOnPush(@RequestParam Integer dataId,HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer userId = JWT.decode(token).getClaim("id").asInt();
+        List<Integer> pushableChannelId = channelDataAuthorityService.findPushableChannelId(userId, dataId);
+        List<User> users = userService.findUserByChannel(pushableChannelId).stream().
+                filter(user -> !user.getIsAdmin().equals(1))
+                .peek(user -> user.setPassword(null)).collect(Collectors.toList());
+        
+        return new CommonResult(200,"success", users);
+    }
 
     //获取除了该用户以外和不拥有该文件权限的所有用户及其所在的channel名称
     @CheckToken
@@ -137,6 +152,8 @@ public class UserController{
         }
         return new CommonResult<>(200,"获取除了该用户以外和不拥有该文件权限的所有用户及其所在的channel名称",result);
     }
+    
+    
 
     @ApiOperation("获取 以channel进行分类的user列表")
     @GetMapping("/user/getGroupedUserList")
