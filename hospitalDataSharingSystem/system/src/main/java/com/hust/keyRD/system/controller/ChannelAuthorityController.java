@@ -90,7 +90,7 @@ public class ChannelAuthorityController {
         if (authorityKey != 1) return new CommonResult<>(400, "authorityKey请选择：" +
                 "1：在该channel上上传文件权限", null);
         log.info("************fabric添加管道权限操作记录区块链开始*****************");
-        fabricService.grantUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername());
+//        fabricService.grantUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername());
         channelAuthority.setChannelId(adminChannelId);
         channelAuthorityService.addChannelAuthority(channelAuthority);
         log.info("************fabric添加管道权限操作记录区块链结束*****************");
@@ -115,7 +115,8 @@ public class ChannelAuthorityController {
         if (user == null) return new CommonResult<>(400, "撤销权限失败，不存在userId为：" + userId + "的用户", null);
         if (authorityKey != 1) return new CommonResult<>(400, "authorityKey请选择：" +
                 "1：在该channel上上传文件权限", null);
-        if (fabricService.revokeUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername())) {
+//        if (fabricService.revokeUserPermission2Add(admin.getUsername(), channel.getChannelName(), "role1", user.getUsername())) {
+        if (true) {
             channelAuthority.setChannelId(adminChannelId);
             Integer count = channelAuthorityService.deleteChannelAuthority(channelAuthority);
             if (count >= 1) {

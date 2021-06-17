@@ -12,6 +12,7 @@ import com.hust.keyRD.system.api.service.FabricService;
 
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
+import com.hust.keyRD.system.service.RecordService;
 import com.hust.keyRD.system.service.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,6 +36,8 @@ public class TraceController {
     private ChannelService channelService;
     @Resource
     private UserService userService;
+    @Resource
+    private RecordService recordService;
 
     //根据文件id获取该文件的最新操作
     @PostMapping(value = "/trace/traceBackward")
@@ -45,8 +48,8 @@ public class TraceController {
         User user = userService.findUserById(userId);
         Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();
-        Record record = fabricService.traceBackward(user.getUsername(),channelName,dataId);
-        record.setUser(user.getUsername());
+        Record record = recordService.findRecentByDataId(Integer.valueOf(dataId));
+//        record.setUser(user.getUsername());
         RecordVO recordVO = new RecordVO();
         recordVO.setRecord(record);
         recordVO.setFileName(dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName());
@@ -66,7 +69,12 @@ public class TraceController {
         if(txId.equals("0")) {
             return new CommonResult<>(404,"该记录已经是最早的记录，无更早的记录",null);
         }
-        Record record = fabricService.traceBackward(user.getUsername(),channelName,dataId,txId);
+//        Record record = fabricService.traceBackward(user.getUsername(),channelName,dataId,txId);
+        Record record = recordService.findByThisTx(txId);
+        if(record.getLastTxId().equals("0")){
+            return new CommonResult<>(404,"该记录已经是最早的记录，无更早的记录",null);
+        }
+        record = recordService.findByThisTx(record.getLastTxId());
         RecordVO recordVO = new RecordVO();
         record.setUser(user.getUsername());
         recordVO.setRecord(record);
@@ -83,7 +91,7 @@ public class TraceController {
         User user = userService.findUserById(userId);
         Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();
-        List<Record> records = traceBackwardAll(user.getUsername(), channelName, dataId);
+        List<Record> records = traceAll(Integer.valueOf(dataId));
         String fileName = "";
         List<RecordVO> recordVOList = new ArrayList<>();
         for (Record record : records) {
@@ -100,15 +108,27 @@ public class TraceController {
         return new CommonResult<>(200,"获取该文件的所有溯源记录成功",recordVOList);
     }
     
-    private List<Record> traceBackwardAll(String requester, String channelName, String fileId) {
+//    private List<Record> traceBackwardAll(String requester, String channelName, String fileId) {
+//        List<Record> ans = new ArrayList<>();
+//        Record record = fabricService.traceBackward(requester, channelName, fileId);
+//        ans.add(record);
+//        while (!record.getLastTxId().equals("0")) {
+//            record = fabricService.traceBackward(requester,channelName,fileId, record.getThisTxId());
+//            ans.add(record);
+//        }
+//        return ans;
+//    }
+    
+    private List<Record> traceAll(Integer dataId){
         List<Record> ans = new ArrayList<>();
-        Record record = fabricService.traceBackward(requester, channelName, fileId);
+        Record record = recordService.findRecentByDataId(dataId);
         ans.add(record);
-        while (!record.getLastTxId().equals("0")) {
-            record = fabricService.traceBackward(requester,channelName,fileId, record.getThisTxId());
+        while(!record.getLastTxId().equals("0")){
+            record = recordService.findByThisTx(record.getLastTxId());
             ans.add(record);
         }
         return ans;
     }
+    
 
 }

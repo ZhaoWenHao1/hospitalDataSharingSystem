@@ -51,7 +51,7 @@ public class DataAuthorityController {
         if(authorityKey < 1 || authorityKey > 4) return new CommonResult<>(400,"authorityKey请选择：" +
                 "用户权限 1代表查看文件 2代表修改文件 3代表删除文件 4代表下载文件",null);
         log.info("************fabric添加文件权限操作记录写入区块链开始*****************");
-        grantPermissionService.grantUserPermissionOnFile(dataAuthority);
+//        grantPermissionService.grantUserPermissionOnFile(dataAuthority);
         dataAuthorityService.addDataAuthority(dataAuthority);
         log.info("************fabric添加文件权限操作记录写入区块链结束*****************");
         return new CommonResult<>(200, "dataAuthority添加权限成功", dataAuthority);
@@ -72,9 +72,9 @@ public class DataAuthorityController {
         if(authorityKey < 1 || authorityKey > 4) return new CommonResult<>(400,"authorityKey请选择：" +
                 "用户权限 1代表查看文件 2代表修改文件 3代表删除文件",null);
         log.info("************fabric撤销文件权限操作记录区块链开始*****************");
-        if(!grantPermissionService.revokeUserPermissionOnFile(dataAuthority)){
-            return new CommonResult<>(400,"fabric: 撤销权限失败");
-        }
+//        if(!grantPermissionService.revokeUserPermissionOnFile(dataAuthority)){
+//            return new CommonResult<>(400,"fabric: 撤销权限失败");
+//        }
         Integer count = dataAuthorityService.deleteDataAuthority(dataAuthority);
         log.info("************fabric撤销文件权限操作记录区块链结束*****************");
         if(count>=1) return new CommonResult<>(200,"dataAuthority撤销权限成功",dataAuthority);
@@ -217,7 +217,7 @@ public class DataAuthorityController {
             dataAuthority.setDataSampleId(sharedDataId);
             dataAuthority.setAuthorityKey(authorityKey);//查看id
             log.info("************fabric添加文件权限操作记录写入区块链开始*****************");
-            grantPermissionService.grantUserPermissionOnFile(dataAuthority);
+//            grantPermissionService.grantUserPermissionOnFile(dataAuthority);
             dataAuthorityService.addDataAuthority(dataAuthority);
             log.info("************fabric添加文件权限操作记录写入区块链结束*****************");
             sharedDataAuthority.setAcceptOrNot(1);

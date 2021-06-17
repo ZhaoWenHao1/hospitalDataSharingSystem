@@ -75,7 +75,7 @@ public class ChannelDataAuthorityController {
        // System.out.println(username);
         // 区块链添加pull权限
         log.info("************fabric增加文件pull权限记录区块链开始*****************");
-        fabricService.grantInnerChannelPull(channelDataAuthority.getDataId()+"","role1",username);
+//        fabricService.grantInnerChannelPull(channelDataAuthority.getDataId()+"","role1",username);
         log.info("************fabric增加文件pull权限记录区块链结束*****************");
         channelDataAuthorityService.addPullAuthority(channelDataAuthority);
 
@@ -102,7 +102,7 @@ public class ChannelDataAuthorityController {
         Channel targetChannel = channelService.findChannelById(channelDataAuthority.getChannelId());
         String targetChannelUsername = getUsernameByChannel(targetChannel.getChannelName());
         // 增加push权限就是增加目标channel对于用户的pull权限
-        fabricService.grantInnerChannelPush(channelDataAuthority.getDataId()+"","role1",targetChannelUsername);
+//        fabricService.grantInnerChannelPush(channelDataAuthority.getDataId()+"","role1",targetChannelUsername);
         log.info("************fabric增加文件push权限记录区块链结束*****************");
         channelDataAuthorityService.addPushAuthority(channelDataAuthority);
 
@@ -126,7 +126,7 @@ public class ChannelDataAuthorityController {
         //System.out.println(channelDataAuthority.getId()+","+channelDataAuthority.getUserId());
         // 区块链删除pull权限
         log.info("************fabric删除文件pull权限记录区块链开始*****************");
-        fabricService.revokeInnerChannelPull(channelDataAuthority.getDataId()+"","role1",userService.findUserById(channelDataAuthority.getUserId()).getUsername());
+//        fabricService.revokeInnerChannelPull(channelDataAuthority.getDataId()+"","role1",userService.findUserById(channelDataAuthority.getUserId()).getUsername());
         log.info("************fabric删除文件pull权限记录区块链结束*****************");
         channelDataAuthorityService.deleteById(channelDataAuthority.getId());
 
@@ -149,7 +149,7 @@ public class ChannelDataAuthorityController {
                 channelDataAuthority.getDataId(),channelDataAuthority.getChannelId(),channelDataAuthority.getType());
         // 区块链删除push权限
         log.info("************fabric删除文件push权限记录区块链开始*****************");
-        fabricService.revokeInnerChannelPush(channelDataAuthority.getDataId()+"","role1",userService.findUserById(channelDataAuthority.getUserId()).getUsername());
+//        fabricService.revokeInnerChannelPush(channelDataAuthority.getDataId()+"","role1",userService.findUserById(channelDataAuthority.getUserId()).getUsername());
         log.info("************fabric删除文件push权限记录区块链结束*****************");
         channelDataAuthorityService.deleteById(channelDataAuthority.getId());
         return new CommonResult(200,"success");

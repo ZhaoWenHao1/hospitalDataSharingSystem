@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hust.keyRD.system.dao.RecordDao">
+    
+
+    <resultMap type="com.hust.keyRD.commons.entities.Record" id="recordMap">
+        <result property="id" column="id" jdbcType="INTEGER"/>
+        <result property="hashData" column="hash_data" jdbcType="VARCHAR"/>
+        <result property="srcChain" column="src_chain" jdbcType="VARCHAR"/>
+        <result property="user" column="user" jdbcType="VARCHAR"/>
+        <result property="dstChain" column="dst_chain" jdbcType="VARCHAR"/>
+        <result property="dataId" column="data_id" jdbcType="INTEGER"/>
+        <result property="typeTx" column="type_tx" jdbcType="VARCHAR"/>
+        <result property="thisTxId" column="this_tx_id" jdbcType="VARCHAR"/>
+        <result property="lastTxId" column="last_tx_id" jdbcType="VARCHAR"/>
+        <result property="createdTime" column="created_time" jdbcType="TIMESTAMP"/>
+    </resultMap>
+    
+    <insert id="addRecord" parameterType="Record" useGeneratedKeys="true" keyProperty="id">
+        insert into record(id,hash_data,src_chain,user,dst_chain,data_id,type_tx,this_tx_id,last_tx_id,created_time) values
+        (null,#{hashData},#{srcChain},#{user},#{dstChain},#{dataId},#{typeTx},#{thisTxId},#{lastTxId}, #{createdTime});
+    </insert>
+    
+    <select id="findByThisTx" parameterType="String" resultMap="recordMap">
+        select * from record where this_tx_id = #{thisTxId}
+    </select>
+    
+    
+    <select id="findRecentByDataId" parameterType="Integer" resultMap="recordMap">
+        select * from record where data_id = #{dataId} ORDER BY created_time desc limit 1;
+    </select>
+
+
+</mapper>
