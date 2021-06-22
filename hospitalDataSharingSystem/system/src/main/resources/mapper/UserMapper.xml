@@ -35,6 +35,14 @@
     </select>
     <!--用户注册-->
     <insert id="register"  parameterType="User" useGeneratedKeys="true" keyProperty="id">
-        insert into user(id,user_name,password,channel_id,fabric_user_id,is_admin) values(null,#{username},#{password},#{channelId},0,0);
+        insert into user(id,user_name,password,channel_id,fabric_user_id,is_admin,attributes) values(null,#{username},#{password},#{channelId},0,0,#{attributes});
     </insert>
+    <!--更新属性-->
+    <update id="updateAttributes"  parameterType="User" keyProperty="id">
+        update user set attributes=#{attributes} where id=#{id};
+    </update>
+    <!--用户检查属性-->
+    <select id="checkAttribute" resultType="java.lang.Integer">
+        select count(*) from user where id=#{userId} and attributes like CONCAT(CONCAT('%', #{attributes}), '%');;
+    </select>
 </mapper>

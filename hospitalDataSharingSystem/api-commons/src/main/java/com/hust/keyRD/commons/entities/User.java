@@ -16,4 +16,5 @@ public class User implements Serializable {
     private Integer channelId;//所在channel的id
     private Integer isAdmin;//是否为管理员，是的为1，不是的为0
     private String fabricUserId;
+    private String attributes;
 }

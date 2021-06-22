@@ -1,5 +1,6 @@
 package com.hust.keyRD.system.dao;
 
+import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.entities.User;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -20,4 +21,9 @@ public interface UserDao {
     Integer login(User user);
     //用户注册
     void register(User user);
+
+    //更新用户属性
+    void updateAttributes(User user);
+    //检查userId是否拥有attribute属性
+    int checkAttribute(@Param("userId")Integer userId,@Param("attributes")String attributes);
 }
