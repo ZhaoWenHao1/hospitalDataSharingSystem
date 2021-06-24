@@ -10,9 +10,13 @@ import java.util.List;
 public interface ApplyDao {
     void save(Apply apply);
 
-    List<Apply> getApplyList(Integer userId);
+    List<Apply> getApplyListFrom(Integer userId);
 
     Apply findApplyById(Integer id);
 
     void updateResultAndState(Apply apply);
+
+    String getUserAttributesByUserId(Integer userId);
+
+    List<Apply> getApplyListTo(Integer userId);
 }

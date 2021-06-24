@@ -1,11 +1,14 @@
 package com.hust.keyRD.system.controller;
 
 import cn.hutool.json.JSONObject;
+import com.auth0.jwt.JWT;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.commons.myAnnotation.LoginToken;
 import com.hust.keyRD.commons.utils.JwtUtil;
+import com.hust.keyRD.commons.vo.ApplyVO;
+import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
 import com.hust.keyRD.system.service.UserService;
@@ -17,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -28,7 +32,7 @@ public class UserController{
     @Resource
     private ChannelService channelService;
     @Resource
-    private DataService dataService;
+    private ApplyService applyService;
     //登录
     @PostMapping(value = "/user/login")
     @LoginToken
@@ -104,5 +108,39 @@ public class UserController{
     public CommonResult<Map<Channel, List<User>>> getGroupedUserList(){
         Map<Channel, List<User>> result = userService.getGroupedUserList();
         return new CommonResult<>(200, "success", result);
+    }
+    @ApiOperation("获取用户的属性列表")
+    @GetMapping("/user/getUserAttributes")
+    public CommonResult<List<Map<String, String>>> getUserAttributes(HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer userId = JWT.decode(token).getClaim("id").asInt();
+        List<Map<String, String>> result;
+        try {
+            result = applyService.getUserAttributes(userId);
+        }catch (Exception e){
+            return new CommonResult<>(400, "个人属性异常，请联系系统管理员");
+        }
+        return new CommonResult<>(200, "success", result);
+    }
+    @ApiOperation("获取用户申请的属性列表")
+    @GetMapping("/user/getUserApplyAttributes")
+    public CommonResult<List<ApplyVO>> getUserApplyAttributes(HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer userId = JWT.decode(token).getClaim("id").asInt();
+        List<ApplyVO> result;
+        try {
+            result = applyService.getUserApplyAttributes(userId);
+        }catch (Exception e){
+            return new CommonResult<>(400, "个人申请属性异常，请联系系统管理员");
+        }
+        return new CommonResult<>(200, "success", result);
+    }
+    @ApiOperation("获取用户申请的属性列表")
+    @GetMapping("/user/getAllUsers")
+    public CommonResult<List<User>> getAllUsers(){
+        List<User> users = userService.getAllUser();
+        return new CommonResult<>(200, "success", users);
     }
 }

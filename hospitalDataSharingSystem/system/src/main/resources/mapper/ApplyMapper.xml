@@ -19,8 +19,8 @@
         (null,#{applierId},#{applyRemarks},#{targetUserId},#{checkRemarks},#{attributes},#{applyTime},#{result},#{state});
     </insert>
     <!--根据审核人找未处理过的申请列表-->
-    <select id="getApplyList" parameterType="Integer" resultMap="BaseResultMap">
-        select * from apply where target_user_id=#{userId} and state=0;
+    <select id="getApplyListFrom" parameterType="Integer" resultMap="BaseResultMap">
+        select * from apply where target_user_id=#{userId} order by desc apply_time;
     </select>
     <!--根据id找申请列表-->
     <select id="findApplyById" parameterType="Integer" resultMap="BaseResultMap">
@@ -30,5 +30,12 @@
     <update id="updateResultAndState" parameterType="Apply">
         update apply set check_remarks=#{checkRemarks},result=#{result},state=#{state} where id=#{id};
     </update>
-
+    <!--根据id找申请列表-->
+    <select id="getUserAttributesByUserId" parameterType="Integer" resultType="String">
+        select attributes from user where id=#{userId} order by desc apply_time;
+    </select>
+    <!--找该用户的所有申请-->
+    <select id="getApplyListTo" parameterType="Integer" resultMap="BaseResultMap">
+        select * from apply where applier_id=#{userId};
+    </select>
 </mapper>

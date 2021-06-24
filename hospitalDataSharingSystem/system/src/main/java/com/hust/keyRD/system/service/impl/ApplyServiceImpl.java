@@ -1,17 +1,16 @@
 package com.hust.keyRD.system.service.impl;
 
+import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.vo.ApplyVO;
 import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
 import com.hust.keyRD.system.dao.ApplyDao;
 import com.hust.keyRD.system.dao.UserDao;
 import com.hust.keyRD.system.service.ApplyService;
-import com.hust.keyRD.system.service.UserService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Service("applyService")
 public class ApplyServiceImpl implements ApplyService {
@@ -30,13 +29,13 @@ public class ApplyServiceImpl implements ApplyService {
     }
 
     /**
-     * 获取当前用户的请求列表
+     * 获取向当前用户申请的列表
      * @param userId
      * @return
      */
     @Override
     public List<ApplyVO> getApplyList(Integer userId) {
-        List<Apply> applyList = applyDao.getApplyList(userId);
+        List<Apply> applyList = applyDao.getApplyListFrom(userId);
         List<ApplyVO> res = new ArrayList<>();
         for (Apply apply:applyList) {
             ApplyVO applyVO = ApplyVOMapper.INSTANCE.toApplyVO(apply);
@@ -74,5 +73,47 @@ public class ApplyServiceImpl implements ApplyService {
     @Override
     public void update(Apply hasDownApply) {
         applyDao.updateResultAndState(hasDownApply);
+    }
+
+    /**
+     * 获取个人属性
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<Map<String, String>> getUserAttributes(Integer userId) {
+        String myAttributes = applyDao.getUserAttributesByUserId(userId);
+        String[] attributesList = myAttributes.split(SystemConstant.SPLIT_SYMBOL);
+        List<Map<String, String>> res = new ArrayList<>();
+        for (String s:attributesList) {
+            Map<String, String> map = new HashMap<>();
+            String[] asplit = s.split(":");
+            map.put(asplit[0],asplit[1]);
+            res.add(map);
+        }
+        return res;
+    }
+
+    /**
+     * 获取当前用户的申请列表
+     * @param userId
+     * @return
+     */
+    @Override
+    public List<ApplyVO> getUserApplyAttributes(Integer userId) {
+        List<Apply> applyList = applyDao.getApplyListTo(userId);
+        List<ApplyVO> res = new ArrayList<>();
+        for (Apply apply:applyList) {
+            String[] split = apply.getAttributes().split(SystemConstant.SPLIT_SYMBOL);
+            for (String s:split) {
+                ApplyVO applyVO = ApplyVOMapper.INSTANCE.toApplyVO(apply);
+                applyVO.setAttributes(s);
+                applyVO.setApplierName(userDao.findUserById(apply.getApplierId()).getUsername());
+                applyVO.setApplyTime(apply.getApplyTime());
+                applyVO.setTargetUserName(userDao.findUserById(apply.getTargetUserId()).getUsername());
+                res.add(applyVO);
+            }
+        }
+        return res;
     }
 }

@@ -1,7 +1,9 @@
 package com.hust.keyRD.system.controller;
 
 
+import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.JWT;
+import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
@@ -12,10 +14,7 @@ import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -68,7 +67,7 @@ public class ApplyController {
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
         List<ApplyVO> res = applyService.getApplyList(userId);
-        return new CommonResult<>(200, "获取成果",res);
+        return new CommonResult<>(200, "获取成功",res);
     }
     //处理请求属性
     @CheckToken
@@ -85,10 +84,28 @@ public class ApplyController {
         if(applyVO.getResult()==1){
             String attribute = hasDownApply.getAttributes();
             User user = userService.findUserById(hasDownApply.getApplierId());
-            String newAttr = user.getAttributes()==null?attribute:user.getAttributes()+","+attribute;
+            String newAttr = user.getAttributes()==null?attribute:user.getAttributes()+ SystemConstant.SPLIT_SYMBOL +attribute;
             user.setAttributes(newAttr);
             userService.updateAttributes(user);
         }
         return new CommonResult<>(200, "审批成功",hasDownApply);
+    }
+
+
+    /**
+     * 批量处理属性
+     *  将list参数转换为json字符串: JSON.stringify(list)
+     * @param
+     * @return
+     */
+    @CheckToken
+    @PostMapping(value = "/apply/doMultipleApply")
+    @Transactional(rollbackFor = Exception.class)
+    public CommonResult doMultipleApply( @RequestParam("jsonStr")String listJSON){
+        List<ApplyVO> list = JSON.parseArray(listJSON,ApplyVO.class);
+        for (ApplyVO applyVO:list) {
+            doApply(applyVO);
+        }
+        return new CommonResult<>(200, "批量审批成功");
     }
 }
