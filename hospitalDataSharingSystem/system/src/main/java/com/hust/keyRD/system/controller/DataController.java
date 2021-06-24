@@ -101,8 +101,8 @@ public class DataController {
             dataSample.setOriginUserId(originUserId);
             dataSample.setDataType(fileName.substring(fileName.lastIndexOf(".")) + "文件");
             //初次创建时将初始时间和修改时间写成一样
-            dataSample.setCreatedTime(new Timestamp(new Date().getTime()));
-            dataSample.setModifiedTime(new Timestamp(new Date().getTime()));
+            dataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
+            dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
             dataService.uploadFile(dataSample);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
@@ -555,8 +555,5 @@ public class DataController {
         }
         return new CommonResult<>(200, "获取该用户所有文件列表成功", result);
     }
-    
-    
-    
-    
+
 }

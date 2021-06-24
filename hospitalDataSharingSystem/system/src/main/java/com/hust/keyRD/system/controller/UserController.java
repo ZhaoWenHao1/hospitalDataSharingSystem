@@ -83,7 +83,12 @@ public class UserController{
     @LoginToken
     public CommonResult register(@RequestBody User user){
             JSONObject jsonObject = new JSONObject();
-            if(userService.findUserByUsername(user.getUsername())!=null) return new CommonResult<>(400,"注册失败,用户名已存在",null);
+//            if(user.getAttributes()==null){
+//                return new CommonResult<>(400,"注册失败,请选择您的属性集",null);
+//            }
+            if(userService.findUserByUsername(user.getUsername())!=null) {
+                return new CommonResult<>(400,"注册失败,用户名已存在",null);
+            }
             boolean result = userService.register(user);
             if(user.getChannelId()==null){
                 return new CommonResult<>(400,"注册失败,请选择一个合适的通道",null);
@@ -96,7 +101,9 @@ public class UserController{
                 jsonObject.put("user", user);
                 return new CommonResult<>(200,"注册成功",jsonObject);
             }
-            else return new CommonResult<>(400,"注册失败,请联系系统管理员",null);
+            else{
+                return new CommonResult<>(400,"注册失败,请联系系统管理员",null);
+            }
     }
     
     // 获取可以push的用户
@@ -152,8 +159,6 @@ public class UserController{
         }
         return new CommonResult<>(200,"获取除了该用户以外和不拥有该文件权限的所有用户及其所在的channel名称",result);
     }
-    
-    
 
     @ApiOperation("获取 以channel进行分类的user列表")
     @GetMapping("/user/getGroupedUserList")

@@ -21,4 +21,5 @@ public class DataSample implements Serializable {
     private Timestamp createdTime;
     private Timestamp modifiedTime;
     private Integer sharedCount;
+    private String decryptionRules;
 }

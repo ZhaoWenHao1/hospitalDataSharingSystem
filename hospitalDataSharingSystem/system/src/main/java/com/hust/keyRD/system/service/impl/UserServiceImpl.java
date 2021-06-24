@@ -46,8 +46,9 @@ public class UserServiceImpl implements UserService {
         if(userDao.login(user) >= 1) {
             return true;
         }
-        else 
+        else {
             return false;
+        }
     }
 
     @Override
@@ -70,5 +71,10 @@ public class UserServiceImpl implements UserService {
             result.put(channel, v);
         });
         return result;
+    }
+
+    @Override
+    public void updateAttributes(User user) {
+        userDao.updateAttributes(user);
     }
 }

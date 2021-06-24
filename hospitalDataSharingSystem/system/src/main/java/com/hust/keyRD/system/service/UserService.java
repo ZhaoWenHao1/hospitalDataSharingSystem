@@ -26,4 +26,10 @@ public interface UserService {
      * @return
      */
     Map<Channel, List<User>> getGroupedUserList();
+
+    /**
+     * 更新用户属性
+     * @param user
+     */
+    void updateAttributes(User user);
 }
