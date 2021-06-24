@@ -1,45 +1,38 @@
 package com.hust.keyRD.system.controller;
 
 import com.auth0.jwt.JWT;
-import com.hust.keyRD.commons.Dto.PushDataInfoDto;
-import com.hust.keyRD.commons.Dto.ShareResult;
-import com.hust.keyRD.commons.entities.*;
+import com.hust.keyRD.commons.entities.Channel;
+import com.hust.keyRD.commons.entities.CommonResult;
+import com.hust.keyRD.commons.entities.DataSample;
+import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
-import com.hust.keyRD.commons.utils.JwtUtil;
+import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.utils.MD5Util;
-import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
-import com.hust.keyRD.commons.vo.UserInnerDataVO;
-import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
-import com.hust.keyRD.commons.vo.mapper.UserInnerDataVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
-import com.hust.keyRD.system.constant.DataAuthorityConstant;
-import com.hust.keyRD.system.dao.ChannelDataAuthorityDao;
 import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
+import com.hust.keyRD.system.service.ChannelService;
+import com.hust.keyRD.system.service.DataService;
+import com.hust.keyRD.system.service.UserService;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import com.hust.keyRD.commons.myAnnotation.CheckToken;
-import com.hust.keyRD.system.service.*;
-import com.hust.keyRD.commons.vo.DataUserAuthorityVO;
 import org.bson.types.Binary;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Timestamp;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Date;
+import java.util.Map;
+import java.util.Objects;
 
 
 @Slf4j
@@ -49,8 +42,6 @@ public class DataController {
     @Resource
     private DataService dataService;
     @Resource
-    private DataAuthorityService dataAuthorityService;
-    @Resource
     private FabricService fabricService;
     @Resource
     private UserService userService;
@@ -58,11 +49,6 @@ public class DataController {
     private ChannelService channelService;
     @Resource
     private FileService fileService;
-    @Resource
-    private ChannelDataAuthorityService channelDataAuthorityService;
-    @Resource
-    private ChannelDataAuthorityDao channelDataAuthorityDao;
-
 
     //上传文件
     @CheckToken
@@ -135,7 +121,6 @@ public class DataController {
            log.info("4.授予用户文件修改权限：" + res);
             result.setGrantModifyRes(res.toString());
             //写入上传者权限
-          dataAuthorityService.addMasterDataAuthority(originUserId, dataSample.getId());
          log.info("************fabric上传文件操作记录区块链结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
@@ -147,85 +132,16 @@ public class DataController {
     @CheckToken
     @GetMapping(value = "/data/getDataList")
     public CommonResult getDataList(HttpServletRequest httpServletRequest) {
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        List<DataSample> allList = dataService.getDataList();
-        List<DataAuthority> list = dataAuthorityService.findDataAuthorityByUserId(userId);//获取该用户的所有权限
-        List<DataUserAuthorityVO> dataUserAuthorityVOS = new ArrayList<>();
-        Set<Integer> set = new HashSet<>();
-        for (int i = 0; i < list.size(); i++) {//首先获取该用户拥有权限的文件
-            DataUserAuthorityVO temp = new DataUserAuthorityVO();
 
-            Integer dataSampleId = list.get(i).getDataSampleId();
-            if (!set.contains(dataSampleId)) {
-                set.add(dataSampleId);
-                DataSample dataSample = dataService.findDataById(dataSampleId);
-                Channel channel = channelService.findChannelById(dataSample.getChannelId());
-                temp.setDataSample(dataSample);
-                temp.setChannelName(channel.getChannelName());
-                Set<Integer> s = new HashSet<>();
-                for (int j = 0; j < list.size(); j++) {
-                    if (list.get(j).getDataSampleId().equals(dataSampleId)) {
-                        s.add(list.get(j).getAuthorityKey());
-                    }
-                }
-                temp.setAuthoritySet(s);
-                dataUserAuthorityVOS.add(temp);
-            }
-        }
-        Set<Integer> hasDataAuthorityId = new HashSet<>();
-        for (int i = 0; i < dataUserAuthorityVOS.size(); i++) {//将有文件的id取出来，在下面进行对比，找出没有权限的
-            DataUserAuthorityVO dataUserAuthorityVO = dataUserAuthorityVOS.get(i);
-            hasDataAuthorityId.add(dataUserAuthorityVO.getDataSample().getId());
-        }
-        for (int i = 0; i < allList.size(); i++) {//所有文件中没有权限的文件进行添加
-            DataSample dataSample = allList.get(i);
-            if(!hasDataAuthorityId.contains(dataSample.getId())){
-                DataUserAuthorityVO dataUserAuthorityVO = new DataUserAuthorityVO();
-                dataUserAuthorityVO.setDataSample(dataSample);
-                dataUserAuthorityVO.setChannelName(channelService.findChannelById(dataSample.getChannelId()).getChannelName());
-                dataUserAuthorityVO.setAuthoritySet(new HashSet<>());
-                dataUserAuthorityVOS.add(dataUserAuthorityVO);
-            }
-        }
-        Map<Channel,List<DataUserAuthorityVO>> result = new HashMap<>();
-        List<Channel> channels = channelService.getAllChannel();
-        for (int i = 0; i < channels.size(); i++) {//按照channel进行划分
-            Channel channel = channels.get(i);
-            List<DataUserAuthorityVO> dataUserAuthorityVOList = new ArrayList<>();
-            for (int j = 0; j < dataUserAuthorityVOS.size(); j++) {
-                DataUserAuthorityVO dataUserAuthorityVO = dataUserAuthorityVOS.get(j);
-                if(channel.getId().equals(dataUserAuthorityVO.getDataSample().getChannelId())){
-                    dataUserAuthorityVOList.add(dataUserAuthorityVO);
-                }
-            }
-            result.put(channel,dataUserAuthorityVOList);
-        }
-        return new CommonResult<>(200, "获取该用户所有文件权限列表成功", result);
+        return new CommonResult<>(200, "获取该用户所有文件权限列表成功", null);
     }
 
-    //根据文件id删除文件
-    //上传文件
-//    @CheckToken
-//    @PostMapping(value = "/data/deleteDataById")
-//    @ResponseBody
-//    public CommonResult deleteDataById(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
-//        Integer dataId = Integer.valueOf(params.get("dataId"));
-//        // 从 http 请求头中取出 token
-//        String token = httpServletRequest.getHeader("token");
-//
-//        Integer result = dataService.deleteDataById(dataId);
-//        if (result < 1) {
-//            return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
-//        }
-//        return new CommonResult<>(200, "成功删除id为：" + dataId + "的文件,token为：" + token, null);
-//    }
 
     //根据文件id获取文件内容
     @CheckToken
     @PostMapping(value = "/data/getData")
     @ResponseBody
+    // TODO
     public CommonResult getData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
         Integer dataId = Integer.valueOf(params.get("dataId"));
         DataSample dataSample = dataService.findDataById(dataId);
@@ -259,163 +175,6 @@ public class DataController {
         log.info("************fabric读取文件操作记录区块链结束*****************");
         return new CommonResult<>(200, "文件token为：" + token + "\r\ntxId：" + txId, fileContent);
     }
-    
-    // 获取channel间数据
-    // 只获取当前用户可pull的其他channel的数据
-    @ApiOperation("获取当前用户可pull的其他channel的文件")
-    @GetMapping("/data/getInterChannelData")
-    public CommonResult<List<DataSampleVO>> getInterChannelData(HttpServletRequest httpServletRequest){
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JwtUtil.parseJWT(token).get("id", Integer.class);
-        User user = userService.findUserById(userId);
-        List<DataSample> interChannelPullDataList = channelDataAuthorityService.getInterChannelPullData(user.getId(), user.getChannelId());
-        List<DataSampleVO> dataSampleVOList = interChannelPullDataList.parallelStream()
-                .map(DataSampleVOMapper.INSTANCE::toDataSampleVO)
-                .peek(dataSampleVO -> {
-                   Channel channel = channelService.findChannelById(dataSampleVO.getChannelId());
-                    dataSampleVO.setHospitalName(channel.getHospitalName());
-                    dataSampleVO.setChannelName(channel.getChannelName());
-//                    return dataSampleVO;
-                })
-                .collect(Collectors.toList());
-
-        return new CommonResult<>(200,"success", dataSampleVOList);
-    }
-
-    // 获取当前channel的文件
-    // 除对每个文件增删改查外，还能进行文件push到其他channel的权限
-    @ApiOperation("获取当前channel的文件 除对每个文件增删改查外，还能进行文件push到其他channel的权限")
-    @GetMapping("/data/getCurrentChannelData")
-    public CommonResult<List<UserInnerDataVO>> getCurrentChannelData(HttpServletRequest httpServletRequest){
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        List<UserInnerDataVO> userInnerDataVOList = dataService.getCurrentChannelData(userId);
-        userInnerDataVOList.parallelStream().forEach(userInnerDataVO -> {
-            userInnerDataVO.setChannelName(channelService.findChannelById(userInnerDataVO.getChannelId()).getChannelName());
-        });
-        return new CommonResult<>(200, "success", userInnerDataVOList);
-    }
-//
-    // 当前用户将channelId的文件dataId  pull到用户所在的channel
-    @ApiOperation("当前用户将channelId的文件dataId  pull到用户所在的channel")
-    @PostMapping("/data/pullData")
-    public CommonResult pullData(@RequestBody Map<String, String> params,HttpServletRequest httpServletRequest){
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        // 所pull的文件Id
-        Integer dataId = Integer.valueOf(params.get("dataId"));
-        // 文件所在的channelId
-        Integer channelId = Integer.valueOf(params.get("channelId"));
-        User user = userService.findUserById(userId);
-        Integer checkAuthorityCount = channelDataAuthorityService.checkPullAuthority(userId,dataId,channelId);
-        if(checkAuthorityCount>=1){
-            DataSample dataSample = dataService.findDataById(dataId);
-            Optional<FileModel> fileModel = fileService.getFileById(dataSample.getMongoId());
-            FileModel newFileModel = fileService.copyFile(fileModel.    get());//获取新文件,已经保存至mangodb中
-            //将新文件保存至数据库，文件channelId为该用户所在的channelId
-            DataSample newDataSample = new DataSample();
-            newDataSample.setChannelId(user.getChannelId());
-            newDataSample.setMongoId(newFileModel.getId());
-            newDataSample.setDataName(dataSample.getDataName() + "_copy");
-            newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
-            //初次创建时将初始时间和修改时间写成一样
-            newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
-            newDataSample.setModifiedTime(new Timestamp(new Date().getTime()));
-            //文件大小以KB作为单位
-            // 首先先将.getSize()获取的Long转为String 单位为B
-            Double size = Double.parseDouble(String.valueOf(newFileModel.getSize()));
-            BigDecimal b = new BigDecimal(size);
-            // 2表示2位 ROUND_HALF_UP表明四舍五入，
-            size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            // 此时size就是保留两位小数的浮点数
-            newDataSample.setDataSize(size);
-            newDataSample.setOriginUserId(userId);
-            dataService.uploadFile(newDataSample);//上传至数据库
-            //写入上传者权限
-            dataAuthorityService.addMasterDataAuthority(userId, newDataSample.getId());
-            //TODO fabric操作
-            String requester = user.getUsername();
-            String requesterChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
-            String targetChannelName = channelService.findChannelById(channelId).getChannelName();
-
-            ShareResult shareResult = fabricService.pullData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
-            log.info(shareResult.toString());
-
-            return new CommonResult<>(200, "success", newDataSample);
-        }else {
-            return new CommonResult<>(400, "您没有拉取该文件的权限", null);
-        }
-
-    }
-//
-    // 当前用户将用户所在channel的dataId push到channelId上
-    @ApiOperation("当前用户将用户所在channel的dataId push到channelId上")
-    @PostMapping("/data/pushData")
-    @Transactional(rollbackFor = Exception.class)
-    public CommonResult pushData(@RequestBody Map<String, String> params,HttpServletRequest httpServletRequest){
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        // 所pull的文件Id
-        Integer dataId = Integer.valueOf(params.get("dataId"));
-        // 目标channelId 要发送到该channel上   
-        // TODO：后来改为用户id 故需获得用户所在channelId
-        Integer channelId = Integer.valueOf(params.get("channelId"));
-        Integer targetUserId = Integer.valueOf(params.get("userId"));
-//        channelId = userService.findUserById(userId).getChannelId();
-        User user = userService.findUserById(userId);
-        Integer checkAuthorityCount = channelDataAuthorityService.checkPushAuthority(userId,dataId,channelId);
-        if(checkAuthorityCount>=1){
-            DataSample dataSample = dataService.findDataById(dataId);
-            Optional<FileModel> fileModel = fileService.getFileById(dataSample.getMongoId());
-            FileModel newFileModel = fileService.copyFile(fileModel.get());//获取新文件,已经保存至mangodb中
-            //将新文件保存至数据库，文件channelId为对应channelId
-            DataSample newDataSample = new DataSample();
-            newDataSample.setChannelId(channelId);
-            newDataSample.setMongoId(newFileModel.getId());
-            newDataSample.setDataName(dataSample.getDataName() + "_copy");
-            newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
-            //初次创建时将初始时间和修改时间写成一样
-            newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
-            newDataSample.setModifiedTime(new Timestamp(new Date().getTime()));
-            //文件大小以KB作为单位
-            // 首先先将.getSize()获取的Long转为String 单位为B
-            Double size = Double.parseDouble(String.valueOf(newFileModel.getSize()));
-            BigDecimal b = new BigDecimal(size);
-            // 2表示2位 ROUND_HALF_UP表明四舍五入，
-            size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            // 此时size就是保留两位小数的浮点数
-            newDataSample.setDataSize(size);
-            newDataSample.setOriginUserId(targetUserId);
-            dataService.uploadFile(newDataSample);//上传至数据库
-            dataService.sharedCountIncrease(dataId);
-            //不写入上传者权限！
-            log.info("************fabric push文件操作记录区块链开始*****************");
-            String requester = user.getUsername();
-            String requesterChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
-            String targetChannelName = channelService.findChannelById(channelId).getChannelName();
-
-            ShareResult shareResult = fabricService.pushData(user.getUsername(), String.valueOf(dataId), "hash", requesterChannelName, targetChannelName, newDataSample.getId().toString());
-            log.info(shareResult.toString());
-            log.info("************fabric push文件操作记录区块链结束*****************");
-            return new CommonResult<>(200, "success", newDataSample);
-        }else {
-            return new CommonResult<>(400, "您没有上传该文件到对于通道的权限", null);
-        }
-    }
-    
-    // 中心链跨链权限管理 分为push权限和pull权限
-
-    // 获取data列表
-    @ApiOperation("获取以channel分类的data列表")
-    @GetMapping("/data/getGroupedDataList")
-    public CommonResult<Map<Channel, List<DataSample>>> getGroupedDataList(){
-        Map<Channel, List<DataSample>> groupedDataList = dataService.getGroupedDataList();
-        return new CommonResult<>(200, "success", groupedDataList);
-    }
 
 
     //根据文件id对文件内容进行更新
@@ -423,6 +182,7 @@ public class DataController {
     @PostMapping(value = "/data/updateData")
     @ResponseBody
     @Transactional
+    // TODO
     public CommonResult updateData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
@@ -472,88 +232,46 @@ public class DataController {
         return new CommonResult<>(200, "id为：" + dataId + "的文件更新成功\r\ntxId：" + txId, null);
     }
 
-    //根据文件id下载文件
-    @GetMapping(value = "/data/downloadData")
-    @ResponseBody
-    @Transactional
-    public ResponseEntity<Object> downloadData(@RequestParam("dataId") Integer dataId, @RequestParam("token") String token,HttpServletRequest httpServletRequest, HttpServletResponse response) throws UnsupportedEncodingException {
-        // 从 http 请求头中取出 token
-        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
-        User user = userService.findUserById(originUserId);
-        DataSample dataSample = dataService.findDataById(dataId);
-        if (dataSample == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not found");
-        }
-        if(dataAuthorityService.checkDataAuthority(new DataAuthority(null,originUserId,dataId, DataAuthorityConstant.AUTHORITY_DOWNLOAD)) < 1){
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权限");
-        }
-        log.info("************fabric下载文件操作记录区块链开始*****************");
-        // 1. 申请读取权限
-        String username = user.getUsername();
-        String dstChannelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
-        String srcChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
-        String txId = fabricService.applyForDownloadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId));
-        if (txId == null || txId.isEmpty()) {
-            log.info("申请文件下载权限失败");
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("无权限");
-        }
-        // 2. 读取文件
-        Optional<FileModel> file = fileService.getFileById(dataSample.getMongoId());
-        // 3. 二次上链
-        String record = fabricService.updateForDownloadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId), txId);
-        log.info("2. 二次上链 ： " + record);
-        log.info("************fabric下载文件操作记录区块链结束*****************");
-        if (file.isPresent()) {
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; fileName=" + new String(file.get().getName().getBytes("utf-8"), "ISO-8859-1"))
-                    .header(HttpHeaders.CONTENT_TYPE, "application/octet-stream")
-                    .header(HttpHeaders.CONTENT_LENGTH, file.get().getSize() + "").header("Connection", "close")
-                    .body(file.get().getContent().getData());
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("File was not found");
-        }
-
-    }
     
-
     //根据上传者id获取文件列表
     @CheckToken
     @GetMapping(value = "/data/getDataListByOriginUserId")
+    // TODO
     public CommonResult getDataListByOriginUserId(HttpServletRequest httpServletRequest) {
         // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        User user = userService.findUserById(userId);
-        List<DataSample> dataList = dataService.getDataListByOriginUserId(userId);
-        List<DataUserAuthorityVO> result = new ArrayList<>();
-        for (int i = 0; i < dataList.size(); i++) {
-            DataSample dataSample = dataList.get(i);
-            DataUserAuthorityVO dataUserAuthorityVO = new DataUserAuthorityVO();
-            dataUserAuthorityVO.setDataSample(dataSample);
-            dataUserAuthorityVO.setChannelName(channelService.findChannelById(dataSample.getChannelId()).getChannelName());
-            List<DataAuthority> list1 = dataAuthorityService.findDataAuthorityByUserIdAndDataId(userId,dataSample.getId());
-            Set<Integer> authorities = new HashSet<>();
-            for (int j = 0; j < list1.size(); j++) {
-                authorities.add(list1.get(j).getAuthorityKey());
-            }
-            dataUserAuthorityVO.setAuthoritySet(authorities);
-            result.add(dataUserAuthorityVO);
-        }
-        // 查询push权限
-        Map<Integer,DataUserAuthorityVO> map = new HashMap<>();
-        result.forEach(dataUserAuthorityVO -> map.put(dataUserAuthorityVO.getDataSample().getId(), dataUserAuthorityVO));
-        List<PushDataInfoDto> innerChannelPushData = channelDataAuthorityService.getInnerChannelPushData(user.getId(), user.getChannelId());
-        for (PushDataInfoDto pushDataInfoDto : innerChannelPushData) {
-            Integer dataId = pushDataInfoDto.getDataId();
-            DataUserAuthorityVO dataUserAuthorityVO = map.get(dataId);
-            if(dataUserAuthorityVO != null){
-                if(dataUserAuthorityVO.getPushChannelSet() == null){
-                    dataUserAuthorityVO.setPushChannelSet(new HashSet<>());
-                }
-                dataUserAuthorityVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(),pushDataInfoDto.getChannelName(), pushDataInfoDto.getHospitalName()));
-            }
-        }
-        return new CommonResult<>(200, "获取该用户所有文件列表成功", result);
+//        String token = httpServletRequest.getHeader("token");
+//        Integer userId = JWT.decode(token).getClaim("id").asInt();
+//        User user = userService.findUserById(userId);
+//        List<DataSample> dataList = dataService.getDataListByOriginUserId(userId);
+//        List<DataUserAuthorityVO> result = new ArrayList<>();
+//        for (int i = 0; i < dataList.size(); i++) {
+//            DataSample dataSample = dataList.get(i);
+//            DataUserAuthorityVO dataUserAuthorityVO = new DataUserAuthorityVO();
+//            dataUserAuthorityVO.setDataSample(dataSample);
+//            dataUserAuthorityVO.setChannelName(channelService.findChannelById(dataSample.getChannelId()).getChannelName());
+//            List<DataAuthority> list1 = dataAuthorityService.findDataAuthorityByUserIdAndDataId(userId,dataSample.getId());
+//            Set<Integer> authorities = new HashSet<>();
+//            for (int j = 0; j < list1.size(); j++) {
+//                authorities.add(list1.get(j).getAuthorityKey());
+//            }
+//            dataUserAuthorityVO.setAuthoritySet(authorities);
+//            result.add(dataUserAuthorityVO);
+//        }
+//        // 查询push权限
+//        Map<Integer,DataUserAuthorityVO> map = new HashMap<>();
+//        result.forEach(dataUserAuthorityVO -> map.put(dataUserAuthorityVO.getDataSample().getId(), dataUserAuthorityVO));
+//        List<PushDataInfoDto> innerChannelPushData = channelDataAuthorityService.getInnerChannelPushData(user.getId(), user.getChannelId());
+//        for (PushDataInfoDto pushDataInfoDto : innerChannelPushData) {
+//            Integer dataId = pushDataInfoDto.getDataId();
+//            DataUserAuthorityVO dataUserAuthorityVO = map.get(dataId);
+//            if(dataUserAuthorityVO != null){
+//                if(dataUserAuthorityVO.getPushChannelSet() == null){
+//                    dataUserAuthorityVO.setPushChannelSet(new HashSet<>());
+//                }
+//                dataUserAuthorityVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(),pushDataInfoDto.getChannelName(), pushDataInfoDto.getHospitalName()));
+//            }
+//        }
+        return new CommonResult<>(200, "获取该用户所有文件列表成功", null);
     }
 
 }

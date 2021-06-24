@@ -4,7 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
+
+import java.sql.Timestamp;
 
 /**
  * @program: fabricTest
@@ -15,9 +16,9 @@ import lombok.ToString;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
 public class Record {
 
+    private Integer id;
 
     /**
      * 数据密文hash
@@ -47,7 +48,7 @@ public class Record {
      * 目标数据标识
      */
     @JsonProperty("data_id")
-    private String dataId;
+    private Integer dataId;
 
     /**
      * 事务的操作类型
@@ -66,4 +67,10 @@ public class Record {
      */
     @JsonProperty("last_tx_id")
     private String lastTxId;
+
+    /**
+     * 创建时间
+     */
+    private Timestamp createdTime;
+
 }

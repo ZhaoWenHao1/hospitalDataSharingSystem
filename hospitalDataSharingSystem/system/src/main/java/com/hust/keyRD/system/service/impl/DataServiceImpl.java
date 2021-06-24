@@ -1,23 +1,16 @@
 package com.hust.keyRD.system.service.impl;
 
-import com.hust.keyRD.commons.Dto.PushDataInfoDto;
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.Channel;
-import com.hust.keyRD.commons.entities.User;
-import com.hust.keyRD.commons.vo.UserInnerDataVO;
-import com.hust.keyRD.commons.vo.mapper.UserInnerDataVOMapper;
-import com.hust.keyRD.system.dao.DataDao;
 import com.hust.keyRD.commons.entities.DataSample;
-import com.hust.keyRD.system.service.ChannelDataAuthorityService;
+import com.hust.keyRD.system.dao.DataDao;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
 import com.hust.keyRD.system.service.UserService;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
-import javax.xml.crypto.Data;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,8 +24,6 @@ public class DataServiceImpl implements DataService
     private UserService userService;
     @Resource
     private DataService dataService;
-    @Resource
-    private ChannelDataAuthorityService channelDataAuthorityService;
     @Resource
     private ChannelService channelService;
 
@@ -79,30 +70,7 @@ public class DataServiceImpl implements DataService
         return dataDao.getUserInnerDataListByUserIdAndChannelId(userId, channelId);
     }
 
-    @Override
-    public List<UserInnerDataVO> getCurrentChannelData(Integer userId) {
-        User user = userService.findUserById(userId);
-        List<UserInnerDataDto> userInnerDataList = dataService.getUserInnerDataListByUserIdAndChannelId(user.getId(), user.getChannelId());
-        List<UserInnerDataVO> userInnerDataVOList = userInnerDataList.stream().map(UserInnerDataVOMapper.INSTANCE::toUserInnerDataVO).collect(Collectors.toList());
-        // 查询push权限
-        Map<Integer, UserInnerDataVO> map = new HashMap<Integer, UserInnerDataVO>();
-        userInnerDataVOList.forEach(userInnerDataVO -> map.put(userInnerDataVO.getId(), userInnerDataVO));
-        List<PushDataInfoDto> innerChannelPushData = channelDataAuthorityService.getInnerChannelPushData(user.getId(), user.getChannelId());
-        innerChannelPushData.forEach(pushDataInfoDto -> {
-            Integer dataId = pushDataInfoDto.getDataId();
-            UserInnerDataVO userInnerDataVO = map.get(dataId);
-            if(userInnerDataVO != null){
-                if(userInnerDataVO.getPushChannelSet() == null){
-                    userInnerDataVO.setPushChannelSet(new HashSet<>());
-                }
-                userInnerDataVO.getPushChannelSet().add(new Channel(pushDataInfoDto.getChannelId(), pushDataInfoDto.getChannelName(), pushDataInfoDto.getHospitalName()));
-            }
-        });
-        return userInnerDataVOList;
-    }
-
-
-
+    
     @Override
     public Map<Channel, List<DataSample>> getGroupedDataList() {
         List<DataSample> allData = getDataList();

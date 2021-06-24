@@ -3,8 +3,6 @@ package com.hust.keyRD.system.service;
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.DataSample;
-import com.hust.keyRD.commons.entities.User;
-import com.hust.keyRD.commons.vo.UserInnerDataVO;
 
 import java.util.List;
 import java.util.Map;
@@ -34,14 +32,6 @@ public interface DataService {
      * @return
      */
     List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(Integer userId, Integer channelId);
-
-    /**
-     * 获取当前channel的文件 除对每个文件增删改查外，还能进行文件push到其他channel的权限
-     * @param userId 当前用户id
-     * @return
-     */
-    List<UserInnerDataVO> getCurrentChannelData(Integer userId);
-
 
 
     Map<Channel, List<DataSample>> getGroupedDataList();
