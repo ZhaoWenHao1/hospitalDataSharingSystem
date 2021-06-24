@@ -1,17 +1,19 @@
 package com.hust.keyRD.system.controller;
 
+import com.hust.keyRD.abe.cpabe.Cpabe;
 import com.auth0.jwt.JWT;
 import com.hust.keyRD.commons.Dto.PushDataInfoDto;
 import com.hust.keyRD.commons.Dto.ShareResult;
+import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
+import com.hust.keyRD.commons.utils.AESUtil;
 import com.hust.keyRD.commons.utils.JwtUtil;
 import com.hust.keyRD.commons.utils.MD5Util;
 import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.UserInnerDataVO;
 import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
-import com.hust.keyRD.commons.vo.mapper.UserInnerDataVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.constant.DataAuthorityConstant;
 import com.hust.keyRD.system.dao.ChannelDataAuthorityDao;
@@ -60,8 +62,6 @@ public class DataController {
     private FileService fileService;
     @Resource
     private ChannelDataAuthorityService channelDataAuthorityService;
-    @Resource
-    private ChannelDataAuthorityDao channelDataAuthorityDao;
 
 
     //上传文件
@@ -70,24 +70,22 @@ public class DataController {
     @ResponseBody
     @Transactional(rollbackFor = Exception.class)
     // Transactional注解默认在抛出uncheck异常（继承自Runtime Exception或 Error ）时才会回滚 而IO SQL等异常属于check异常，所以不会回滚
-    public CommonResult uploadFile(@RequestParam("file") MultipartFile file, @PathVariable("channelId") Integer channelId, HttpServletRequest httpServletRequest) {
+    public CommonResult uploadFile(@RequestParam("file") MultipartFile file, HttpServletRequest httpServletRequest) throws Exception {
         //获取文件名
         String fileName = file.getOriginalFilename();
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
-        Channel channel = channelService.findChannelById(user.getChannelId());
-        Channel dstChannel = channelService.findChannelById(channelId);
+        String encFile = AESUtil.Encrypt(file.getContentType(), SystemConstant.FILE_KEY);
         try {
             // 文件保存到mongoDB
-            FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), file.getSize(),
-                    new Binary(file.getBytes()));
+            FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), encFile.length(),
+                    new Binary(encFile.getBytes()));
             f.setMd5(MD5Util.getMD5(file.getInputStream()));
             fileService.saveFile(f);
 
             DataSample dataSample = new DataSample();
-            dataSample.setChannelId(channelId);//这里后面要做出选择channel
             dataSample.setDataName(fileName);
             //文件大小以KB作为单位
             // 首先先将.getSize()获取的Long转为String 单位为B
@@ -108,34 +106,15 @@ public class DataController {
             UploadResult result = new UploadResult();
             // 1. 权限申请 一次上链
             String username = user.getUsername();
-            //String dstChannelName = dstChannel.getChannelName();
-            //String srcChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
-            String txId = fabricService.applyForCreateFile(username, channel.getChannelName(),dataSample.hashCode()+"", dataSample.getId() + "");
-            log.info("1.创建文件成功 txId: " + txId);
-            result.setFirstUpChainTx(txId);
+            //String txId = fabricService.applyForCreateFile(username, channel.getChannelName(),dataSample.hashCode()+"", dataSample.getId() + "");
+            ///log.info("1.创建文件成功 txId: " + txId);
+            //result.setFirstUpChainTx(txId);
 //            //hash
 //            // 3. 更新链上hash 二次上链
-            String record = fabricService.updateForCreateFile(username, channel.getChannelName(),dataSample.hashCode()+"", dataSample.getId() + "", txId);
-            log.info("2. 更新链上hash ： " + record);
-            result.setSecondUpChainTx(record);
-//            // 4. 授予用户文件的查改权限
-            Boolean res = false;
-            if(channel.getId()==1){
-                res = fabricService.grantUserPermissionOnFileInnerChannel("org2_admin",dataSample.getId() + "", channel.getChannelName(), "read", "role1", username);
-            }else if(channel.getId()==2){
-                res = fabricService.grantUserPermissionOnFileInnerChannel("org4_admin",dataSample.getId() + "", channel.getChannelName(), "read", "role1", username);
-            }
-           log.info("3.授予用户文件读取权限：" + res);
-            result.setGrantReadRes(res.toString());
-            if(channel.getId()==1){
-                res = fabricService.grantUserPermissionOnFileInnerChannel("org2_admin",dataSample.getId() + "", channel.getChannelName(), "modify", "role1", username);
-            }else if(channel.getId()==2){
-                res = fabricService.grantUserPermissionOnFileInnerChannel("org4_admin",dataSample.getId() + "", channel.getChannelName(), "modify", "role1", username);
-            }
-           log.info("4.授予用户文件修改权限：" + res);
-            result.setGrantModifyRes(res.toString());
+           // String record = fabricService.updateForCreateFile(username, channel.getChannelName(),dataSample.hashCode()+"", dataSample.getId() + "", txId);
+          //  log.info("2. 更新链上hash ： " + record);
+          //  result.setSecondUpChainTx(record);
             //写入上传者权限
-          dataAuthorityService.addMasterDataAuthority(originUserId, dataSample.getId());
          log.info("************fabric上传文件操作记录区块链结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
@@ -143,7 +122,8 @@ public class DataController {
         }
     }
 
-    //获取文件列表  //这里获取所有通道的所有文件
+    //获取文件列表
+    // 这里获取所有通道的所有文件
     @CheckToken
     @GetMapping(value = "/data/getDataList")
     public CommonResult getDataList(HttpServletRequest httpServletRequest) {
@@ -151,12 +131,13 @@ public class DataController {
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
         List<DataSample> allList = dataService.getDataList();
-        List<DataAuthority> list = dataAuthorityService.findDataAuthorityByUserId(userId);//获取该用户的所有权限
+        //获取该用户的所有权限
+        List<DataAuthority> list = dataAuthorityService.findDataAuthorityByUserId(userId);
         List<DataUserAuthorityVO> dataUserAuthorityVOS = new ArrayList<>();
         Set<Integer> set = new HashSet<>();
-        for (int i = 0; i < list.size(); i++) {//首先获取该用户拥有权限的文件
+        //首先获取该用户拥有权限的文件
+        for (int i = 0; i < list.size(); i++) {
             DataUserAuthorityVO temp = new DataUserAuthorityVO();
-
             Integer dataSampleId = list.get(i).getDataSampleId();
             if (!set.contains(dataSampleId)) {
                 set.add(dataSampleId);
@@ -175,11 +156,13 @@ public class DataController {
             }
         }
         Set<Integer> hasDataAuthorityId = new HashSet<>();
-        for (int i = 0; i < dataUserAuthorityVOS.size(); i++) {//将有文件的id取出来，在下面进行对比，找出没有权限的
+        //将有文件的id取出来，在下面进行对比，找出没有权限的
+        for (int i = 0; i < dataUserAuthorityVOS.size(); i++) {
             DataUserAuthorityVO dataUserAuthorityVO = dataUserAuthorityVOS.get(i);
             hasDataAuthorityId.add(dataUserAuthorityVO.getDataSample().getId());
         }
-        for (int i = 0; i < allList.size(); i++) {//所有文件中没有权限的文件进行添加
+        //所有文件中没有权限的文件进行添加
+        for (int i = 0; i < allList.size(); i++) {
             DataSample dataSample = allList.get(i);
             if(!hasDataAuthorityId.contains(dataSample.getId())){
                 DataUserAuthorityVO dataUserAuthorityVO = new DataUserAuthorityVO();
@@ -191,7 +174,8 @@ public class DataController {
         }
         Map<Channel,List<DataUserAuthorityVO>> result = new HashMap<>();
         List<Channel> channels = channelService.getAllChannel();
-        for (int i = 0; i < channels.size(); i++) {//按照channel进行划分
+        //按照channel进行划分
+        for (int i = 0; i < channels.size(); i++) {
             Channel channel = channels.get(i);
             List<DataUserAuthorityVO> dataUserAuthorityVOList = new ArrayList<>();
             for (int j = 0; j < dataUserAuthorityVOS.size(); j++) {
@@ -205,28 +189,11 @@ public class DataController {
         return new CommonResult<>(200, "获取该用户所有文件权限列表成功", result);
     }
 
-    //根据文件id删除文件
-    //上传文件
-//    @CheckToken
-//    @PostMapping(value = "/data/deleteDataById")
-//    @ResponseBody
-//    public CommonResult deleteDataById(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
-//        Integer dataId = Integer.valueOf(params.get("dataId"));
-//        // 从 http 请求头中取出 token
-//        String token = httpServletRequest.getHeader("token");
-//
-//        Integer result = dataService.deleteDataById(dataId);
-//        if (result < 1) {
-//            return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
-//        }
-//        return new CommonResult<>(200, "成功删除id为：" + dataId + "的文件,token为：" + token, null);
-//    }
-
     //根据文件id获取文件内容
     @CheckToken
     @PostMapping(value = "/data/getData")
     @ResponseBody
-    public CommonResult getData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
+    public CommonResult getData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) throws Exception {
         Integer dataId = Integer.valueOf(params.get("dataId"));
         DataSample dataSample = dataService.findDataById(dataId);
         DataSample result = dataService.findDataById(dataId);
@@ -234,18 +201,13 @@ public class DataController {
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
+        String attributes = user.getAttributes();
+        //模拟检查属性是否满足
+        if(new Random().nextFloat()>0.5){
+            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+        }
         if (result == null) {
             return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
-        }
-        log.info("************fabric读取文件操作记录区块链开始*****************");
-        // 1. 申请读取权限
-        String username = user.getUsername();
-        String dstChannelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
-        String srcChannelName = channelService.findChannelById(user.getChannelId()).getChannelName();
-        String txId = fabricService.applyForReadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId));
-        if (txId == null || txId.isEmpty()) {
-            log.info("申请文件读取权限失败");
-            return new CommonResult<>(300, "申请文件读取权限失败", null);
         }
         // 2. 读取文件
         String fileContent = new String(Objects.requireNonNull(fileService.getFileById(dataSample.getMongoId())
@@ -253,11 +215,13 @@ public class DataController {
                 .map(Binary::getData)
                 .orElse(null))
         );
+        //解密
+        fileContent = AESUtil.Decrypt(fileContent, SystemConstant.FILE_KEY);
         // 3. 二次上链
-        String record = fabricService.updateForReadFile(username, srcChannelName, dataSample.hashCode()+"", String.valueOf(dataId), txId);
-        log.info("2. 二次上链 ： " + record);
-        log.info("************fabric读取文件操作记录区块链结束*****************");
-        return new CommonResult<>(200, "文件token为：" + token + "\r\ntxId：" + txId, fileContent);
+        //该用户新增文件
+
+        //问题：1.是否需要在mongodb里面插入新的文件吗  2.加密策略与原来的一样吗  3.怎样与之前的文件联系
+        return new CommonResult<>(200, "文件解密成功", fileContent);
     }
     
     // 获取channel间数据
@@ -314,7 +278,7 @@ public class DataController {
         if(checkAuthorityCount>=1){
             DataSample dataSample = dataService.findDataById(dataId);
             Optional<FileModel> fileModel = fileService.getFileById(dataSample.getMongoId());
-            FileModel newFileModel = fileService.copyFile(fileModel.    get());//获取新文件,已经保存至mangodb中
+            FileModel newFileModel = fileService.copyFile(fileModel.get());//获取新文件,已经保存至mangodb中
             //将新文件保存至数据库，文件channelId为该用户所在的channelId
             DataSample newDataSample = new DataSample();
             newDataSample.setChannelId(user.getChannelId());
@@ -322,8 +286,8 @@ public class DataController {
             newDataSample.setDataName(dataSample.getDataName() + "_copy");
             newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
             //初次创建时将初始时间和修改时间写成一样
-            newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
-            newDataSample.setModifiedTime(new Timestamp(new Date().getTime()));
+            newDataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
+            newDataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
             //文件大小以KB作为单位
             // 首先先将.getSize()获取的Long转为String 单位为B
             Double size = Double.parseDouble(String.valueOf(newFileModel.getSize()));
@@ -379,8 +343,8 @@ public class DataController {
             newDataSample.setDataName(dataSample.getDataName() + "_copy");
             newDataSample.setDataType(newFileModel.getName().substring(newFileModel.getName().lastIndexOf(".")) + "文件");
             //初次创建时将初始时间和修改时间写成一样
-            newDataSample.setCreatedTime(new Timestamp(new Date().getTime()));
-            newDataSample.setModifiedTime(new Timestamp(new Date().getTime()));
+            newDataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
+            newDataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
             //文件大小以KB作为单位
             // 首先先将.getSize()获取的Long转为String 单位为B
             Double size = Double.parseDouble(String.valueOf(newFileModel.getSize()));
@@ -462,7 +426,7 @@ public class DataController {
         BigDecimal b = new BigDecimal(size);
         size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         dataSample.setDataSize(size);
-        dataSample.setModifiedTime(new Timestamp(new Date().getTime()));
+        dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
         dataService.updateFile(dataSample);
 
         // 3. 更新hash值到fabric 二次上链
