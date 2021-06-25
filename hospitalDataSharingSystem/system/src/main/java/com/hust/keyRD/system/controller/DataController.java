@@ -229,7 +229,6 @@ public class DataController {
     //根据上传者id获取文件列表
     @CheckToken
     @GetMapping(value = "/data/getDataListByOriginUserId")
-    // TODO
     public CommonResult getDataListByOriginUserId(HttpServletRequest httpServletRequest) {
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");

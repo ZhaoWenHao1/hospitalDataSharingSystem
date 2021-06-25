@@ -18,4 +18,5 @@ public class ApplyVO {
     private String attributes;
     private Date applyTime;
     private Integer result;
+    private Integer state;
 }

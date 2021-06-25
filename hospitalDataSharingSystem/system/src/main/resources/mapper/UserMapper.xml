@@ -29,6 +29,10 @@
     <select id="getAllUser" parameterType="Map" resultMap="BaseResultMap" >
         select id,user_name,channel_id from user where is_admin=0 ORDER BY user_name;
     </select>
+    <!--找所有User-->
+    <select id="getAllUsersExMe" parameterType="Map" resultMap="BaseResultMap" >
+        select id,user_name,channel_id from user where id!=#{userId};
+    </select>
     <!--用户登录-->
     <select id="login"  parameterType="User" resultType="java.lang.Integer">
         select count(*) from user where user_name=#{username} and password=#{password};

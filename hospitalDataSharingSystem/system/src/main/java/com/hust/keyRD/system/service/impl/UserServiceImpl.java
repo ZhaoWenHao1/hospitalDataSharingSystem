@@ -77,4 +77,9 @@ public class UserServiceImpl implements UserService {
     public void updateAttributes(User user) {
         userDao.updateAttributes(user);
     }
+
+    @Override
+    public List<User> getAllUsersExMe(Integer userId) {
+        return userDao.getAllUsersExMe(userId);
+    }
 }

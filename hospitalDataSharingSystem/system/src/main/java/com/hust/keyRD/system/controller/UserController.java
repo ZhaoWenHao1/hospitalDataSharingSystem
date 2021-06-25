@@ -85,6 +85,12 @@ public class UserController{
             if(userService.findUserByUsername(user.getUsername())!=null) {
                 return new CommonResult<>(400,"注册失败,用户名已存在",null);
             }
+            if(user.getIsAdmin()==0){
+                user.setAttributes("position:student");
+            }else {
+                user.setAttributes("position:teacher");
+            }
+            user.setFabricUserId(user.getUsername());
             boolean result = userService.register(user);
             if(user.getChannelId()==null){
                 return new CommonResult<>(400,"注册失败,请选择一个合适的通道",null);
@@ -102,8 +108,7 @@ public class UserController{
             }
     }
 
-
-    @ApiOperation("获取 以channel进行分类的user列表")
+    @ApiOperation("获取以channel进行分类的user列表")
     @GetMapping("/user/getGroupedUserList")
     public CommonResult<Map<Channel, List<User>>> getGroupedUserList(){
         Map<Channel, List<User>> result = userService.getGroupedUserList();
@@ -111,11 +116,11 @@ public class UserController{
     }
     @ApiOperation("获取用户的属性列表")
     @GetMapping("/user/getUserAttributes")
-    public CommonResult<List<Map<String, String>>> getUserAttributes(HttpServletRequest httpServletRequest){
+    public CommonResult<List<String>> getUserAttributes(HttpServletRequest httpServletRequest){
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
-        List<Map<String, String>> result;
+        List<String> result;
         try {
             result = applyService.getUserAttributes(userId);
         }catch (Exception e){
@@ -137,10 +142,24 @@ public class UserController{
         }
         return new CommonResult<>(200, "success", result);
     }
-    @ApiOperation("获取用户申请的属性列表")
-    @GetMapping("/user/getAllUsers")
-    public CommonResult<List<User>> getAllUsers(){
-        List<User> users = userService.getAllUser();
+    @ApiOperation("获取所有用户,除了他自己")
+    @GetMapping("/user/getAllUsersExMe")
+    public CommonResult<List<User>> getAllUsersExMe(HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer userId = JWT.decode(token).getClaim("id").asInt();
+        List<User> users = userService.getAllUsersExMe(userId);
         return new CommonResult<>(200, "success", users);
+    }
+    @ApiOperation("获取某一个用户的属性列表")
+    @GetMapping("/user/findUserAttributes")
+    public CommonResult<List<String>> findUserAttributes(Integer userId){
+        List<String> result;
+        try {
+            result = applyService.getUserAttributes(userId);
+        }catch (Exception e){
+            return new CommonResult<>(400, "个人属性异常，请联系系统管理员");
+        }
+        return new CommonResult<>(200, "success", result);
     }
 }

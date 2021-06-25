@@ -7,6 +7,8 @@ import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
 import com.hust.keyRD.system.dao.ApplyDao;
 import com.hust.keyRD.system.dao.UserDao;
 import com.hust.keyRD.system.service.ApplyService;
+import io.micrometer.core.instrument.util.StringUtils;
+import io.netty.util.internal.StringUtil;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -81,17 +83,13 @@ public class ApplyServiceImpl implements ApplyService {
      * @return
      */
     @Override
-    public List<Map<String, String>> getUserAttributes(Integer userId) {
+    public  List<String> getUserAttributes(Integer userId) {
         String myAttributes = applyDao.getUserAttributesByUserId(userId);
-        String[] attributesList = myAttributes.split(SystemConstant.SPLIT_SYMBOL);
-        List<Map<String, String>> res = new ArrayList<>();
-        for (String s:attributesList) {
-            Map<String, String> map = new HashMap<>();
-            String[] asplit = s.split(":");
-            map.put(asplit[0],asplit[1]);
-            res.add(map);
+        if(StringUtils.isBlank(myAttributes)){
+            return null;
         }
-        return res;
+        String[] attributesList = myAttributes.split(SystemConstant.SPLIT_SYMBOL);
+        return new ArrayList<>(Arrays.asList(attributesList));
     }
 
     /**

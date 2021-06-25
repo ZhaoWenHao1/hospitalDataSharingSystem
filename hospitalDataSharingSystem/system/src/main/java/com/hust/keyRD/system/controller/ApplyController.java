@@ -84,9 +84,12 @@ public class ApplyController {
         if(applyVO.getResult()==1){
             String attribute = hasDownApply.getAttributes();
             User user = userService.findUserById(hasDownApply.getApplierId());
-            String newAttr = user.getAttributes()==null?attribute:user.getAttributes()+ SystemConstant.SPLIT_SYMBOL +attribute;
-            user.setAttributes(newAttr);
-            userService.updateAttributes(user);
+            //不包含属性时才进行添加
+            if(!user.getAttributes().contains(attribute)) {
+                String newAttr = user.getAttributes() == null ? attribute : user.getAttributes() + SystemConstant.SPLIT_SYMBOL + attribute;
+                user.setAttributes(newAttr);
+                userService.updateAttributes(user);
+            }
         }
         return new CommonResult<>(200, "审批成功",hasDownApply);
     }
@@ -101,9 +104,8 @@ public class ApplyController {
     @CheckToken
     @PostMapping(value = "/apply/doMultipleApply")
     @Transactional(rollbackFor = Exception.class)
-    public CommonResult doMultipleApply( @RequestParam("jsonStr")String listJSON){
-        List<ApplyVO> list = JSON.parseArray(listJSON,ApplyVO.class);
-        for (ApplyVO applyVO:list) {
+    public CommonResult doMultipleApply(@RequestBody List<ApplyVO> listJSON){
+        for (ApplyVO applyVO:listJSON) {
             doApply(applyVO);
         }
         return new CommonResult<>(200, "批量审批成功");

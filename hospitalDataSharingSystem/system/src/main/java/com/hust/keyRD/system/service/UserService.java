@@ -32,4 +32,6 @@ public interface UserService {
      * @param user
      */
     void updateAttributes(User user);
+
+    List<User> getAllUsersExMe(Integer userId);
 }

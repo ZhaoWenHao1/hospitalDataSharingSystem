@@ -26,4 +26,6 @@ public interface UserDao {
     void updateAttributes(User user);
     //检查userId是否拥有attribute属性
     int checkAttribute(@Param("userId")Integer userId,@Param("attributes")String attributes);
+    //获取除了他的所有用户
+    List<User> getAllUsersExMe(Integer userId);
 }

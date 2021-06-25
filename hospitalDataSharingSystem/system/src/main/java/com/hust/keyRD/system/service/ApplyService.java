@@ -17,7 +17,7 @@ public interface ApplyService {
 
     void update(Apply hasDownApply);
 
-    List<Map<String, String>> getUserAttributes(Integer userId);
+    List<String> getUserAttributes(Integer userId);
 
     List<ApplyVO> getUserApplyAttributes(Integer userId);
 }
