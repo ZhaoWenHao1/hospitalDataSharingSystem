@@ -11,6 +11,7 @@ import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.utils.AESUtil;
 import com.hust.keyRD.commons.utils.MD5Util;
+import com.hust.keyRD.commons.vo.DataSampleGroupByChannelVO;
 import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.UserInnerDataVO;
@@ -105,16 +106,13 @@ public class DataController {
     }
 
     //获取文件列表  //这里获取所有通道的所有文件
-    @CheckToken
     @GetMapping(value = "/data/getDataList")
-    public CommonResult getDataList(HttpServletRequest httpServletRequest) {
-
-        List<DataSample> dataList = dataService.getDataList();
-        List<DataSampleVO> res = new ArrayList<>();
-        for (DataSample dataSample:dataList) {
-            DataSampleVO dataSampleVO = DataSampleVOMapper.INSTANCE.toDataSampleVO(dataSample);
-            dataSampleVO.setChannelName(channelService.findChannelById(dataSampleVO.getChannelId()).getChannelName());
-            res.add(dataSampleVO);
+    public CommonResult getDataList() {
+        Map<Integer, List<DataSample>> map = dataService.getDataListGroupByChannel();
+        Map<String, List<DataSample>> res = new HashMap<>();
+        for (Map.Entry<Integer, List<DataSample>> entry:map.entrySet()) {
+            String channelName = channelService.findChannelById(entry.getKey()).getChannelName();
+            res.put(channelName,entry.getValue());
         }
         return new CommonResult<>(200, "获取所有文件列表成功", res);
     }

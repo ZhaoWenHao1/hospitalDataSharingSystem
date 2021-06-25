@@ -9,6 +9,7 @@ import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.vo.ApplyVO;
+import com.hust.keyRD.commons.vo.AttributesVO;
 import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
 import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.UserService;
@@ -109,5 +110,11 @@ public class ApplyController {
             doApply(applyVO);
         }
         return new CommonResult<>(200, "批量审批成功");
+    }
+    //获取所有属性列表
+    @GetMapping(value = "/apply/getAttributesList")
+    public CommonResult getAttributesList(){
+        List<AttributesVO> res = applyService.getAttributesList();
+        return new CommonResult<>(200, "获取成功",res);
     }
 }

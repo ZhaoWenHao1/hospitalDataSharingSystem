@@ -1,8 +1,10 @@
 package com.hust.keyRD.system.service.impl;
 
+import com.google.common.base.Joiner;
 import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.vo.ApplyVO;
+import com.hust.keyRD.commons.vo.AttributesVO;
 import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
 import com.hust.keyRD.system.dao.ApplyDao;
 import com.hust.keyRD.system.dao.UserDao;
@@ -110,6 +112,29 @@ public class ApplyServiceImpl implements ApplyService {
                 applyVO.setApplyTime(apply.getApplyTime());
                 applyVO.setTargetUserName(userDao.findUserById(apply.getTargetUserId()).getUsername());
                 res.add(applyVO);
+            }
+        }
+        return res;
+    }
+
+    @Override
+    public List<AttributesVO> getAttributesList() {
+        String stringList = Joiner.on(SystemConstant.SPLIT_SYMBOL).join(applyDao.getAllAttributes());
+        Set<String> set = new HashSet<>();
+        List<AttributesVO> res = new ArrayList<>();
+        String[] attrList = stringList.split(SystemConstant.SPLIT_SYMBOL);
+        for (String s:attrList) {
+            String[] kandv = s.split(":");
+            if(!set.contains(kandv[0])){
+                AttributesVO attributesVO = new AttributesVO(kandv[0], new HashSet<>(Collections.singletonList(kandv[1])));
+                res.add(attributesVO);
+                set.add(kandv[0]);
+            }else {
+                for (AttributesVO tmp:res) {
+                    if(tmp.getKey().equals(kandv[0])){
+                        tmp.getValue().add(kandv[1]);
+                    }
+                }
             }
         }
         return res;

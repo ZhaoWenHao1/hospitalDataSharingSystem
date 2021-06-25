@@ -51,4 +51,5 @@
         where data_sample.channel_id = #{channelId} 
         group by data_sample.id;
     </select>
+
 </mapper>

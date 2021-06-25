@@ -2,6 +2,7 @@ package com.hust.keyRD.system.service;
 
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.vo.ApplyVO;
+import com.hust.keyRD.commons.vo.AttributesVO;
 
 import java.util.List;
 import java.util.Map;
@@ -20,4 +21,6 @@ public interface ApplyService {
     List<String> getUserAttributes(Integer userId);
 
     List<ApplyVO> getUserApplyAttributes(Integer userId);
+
+    List<AttributesVO> getAttributesList();
 }

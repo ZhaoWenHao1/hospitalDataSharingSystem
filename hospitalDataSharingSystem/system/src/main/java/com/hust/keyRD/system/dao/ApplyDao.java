@@ -19,4 +19,6 @@ public interface ApplyDao {
     String getUserAttributesByUserId(Integer userId);
 
     List<Apply> getApplyListTo(Integer userId);
+
+    List<String> getAllAttributes();
 }

@@ -3,6 +3,7 @@ package com.hust.keyRD.system.service.impl;
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.DataSample;
+import com.hust.keyRD.commons.vo.DataSampleGroupByChannelVO;
 import com.hust.keyRD.system.dao.DataDao;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
@@ -81,5 +82,12 @@ public class DataServiceImpl implements DataService
             result.put(channel, v);
         });
         return result;
+    }
+
+    @Override
+    public Map<Integer, List<DataSample>> getDataListGroupByChannel() {
+        List<DataSample> dataList = dataDao.getDataList();
+        Map<Integer, List<DataSample>> collect = dataList.stream().collect(Collectors.groupingBy(DataSample::getChannelId));
+        return collect;
     }
 }

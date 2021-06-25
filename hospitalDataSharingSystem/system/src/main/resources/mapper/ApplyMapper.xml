@@ -38,4 +38,9 @@
     <select id="getApplyListTo" parameterType="Integer" resultMap="BaseResultMap">
         select * from apply where applier_id=#{userId} order by apply_time desc;
     </select>
+    <!--获取所有属性-->
+    <select id="getAllAttributes" resultType="java.lang.String">
+        select attributes from user;
+    </select>
+
 </mapper>
