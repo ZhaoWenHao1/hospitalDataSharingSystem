@@ -59,7 +59,7 @@ public class DataController {
     @ResponseBody
     @Transactional(rollbackFor = Exception.class)
     // Transactional注解默认在抛出uncheck异常（继承自Runtime Exception或 Error ）时才会回滚 而IO SQL等异常属于check异常，所以不会回滚
-    public CommonResult uploadFile(@RequestParam("file") MultipartFile file,@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) throws Exception {
+    public CommonResult uploadFile(@RequestParam("file") MultipartFile file,@RequestParam Map<String, String> params, HttpServletRequest httpServletRequest) throws Exception {
         //获取文件名
         String fileName = file.getOriginalFilename();
         // 从 http 请求头中取出 token
@@ -93,6 +93,7 @@ public class DataController {
             dataSample.setDecryptionRules(params.get("rules"));
             dataSample.setChannelId(user.getChannelId());
             dataSample.setFrom(-1);
+            System.out.println(dataSample);
             dataService.uploadFile(dataSample);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();

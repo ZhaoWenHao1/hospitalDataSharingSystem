@@ -13,11 +13,13 @@
         <id column="created_time" property="createdTime" jdbcType="TIMESTAMP"/>
         <id column="modified_time" property="modifiedTime" jdbcType="TIMESTAMP"/>
         <id column="shared_count" property="sharedCount" jdbcType="INTEGER"/>
+        <id column="decryption_rules" property="decryptionRules" jdbcType="VARCHAR"/>
+        <id column="from_id" property="from" jdbcType="INTEGER"/>
     </resultMap>
     <!--上传file-->
     <insert id="uploadFile" parameterType="DataSample" useGeneratedKeys="true" keyProperty="id">
-        insert into data_sample(channel_id,mongo_id,data_name,data_type,data_size,origin_user_id,created_time,modified_time)
-        values(#{channelId},#{mongoId},#{dataName},#{dataType},#{dataSize},#{originUserId},#{createdTime},#{modifiedTime});
+        insert into data_sample(channel_id,mongo_id,data_name,data_type,data_size,origin_user_id,created_time,modified_time,decryption_rules,from_id)
+        values(#{channelId},#{mongoId},#{dataName},#{dataType},#{dataSize},#{originUserId},#{createdTime},#{modifiedTime},#{decryptionRules},#{from});
     </insert>
     <!--获取文件列表-->
     <select id="getDataList" parameterType="Map" resultMap="BaseResultMap">
