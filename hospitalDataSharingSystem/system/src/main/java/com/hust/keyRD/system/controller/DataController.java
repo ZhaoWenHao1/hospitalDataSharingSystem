@@ -64,7 +64,9 @@ public class DataController {
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
-        String encFile = AESUtil.Encrypt(new String(file.getBytes()), SystemConstant.FILE_KEY);
+        String rules = params.get("rules");
+//        System.out.println(AESUtil.transTo16(rules));
+        String encFile = AESUtil.Encrypt(new String(file.getBytes()), AESUtil.transTo16(rules));
         try {
             // 文件保存到mongoDB
             FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), encFile.length(),
@@ -88,7 +90,7 @@ public class DataController {
             //初次创建时将初始时间和修改时间写成一样
             dataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
             dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
-            dataSample.setDecryptionRules(params.get("rules"));
+            dataSample.setDecryptionRules(rules);
             dataSample.setChannelId(user.getChannelId());
             dataSample.setFrom(-1);
             System.out.println(dataSample);
@@ -186,8 +188,9 @@ public class DataController {
             return new CommonResult<>(400, "这不是你的文件，获取失败");
         }
         String dataContent = new String(fileService.getFileById(dataSample.getMongoId()).get().getContent().getData());
-        System.out.println(dataContent);
-        String res = AESUtil.Decrypt(dataContent,SystemConstant.FILE_KEY);
+        //System.out.println(dataContent);
+        String rules = dataSample.getDecryptionRules();
+        String res = AESUtil.Decrypt(dataContent,AESUtil.transTo16(rules));
         return new CommonResult<>(200, "success", res);
     }
 
@@ -210,7 +213,8 @@ public class DataController {
         // 2. 修改文件
         // 更新mongoDB
         FileModel fileModel = fileService.getFileById(dataSample.getMongoId()).orElseThrow(MongoDBException::new);
-        String encFile = AESUtil.Encrypt(dataContent,SystemConstant.FILE_KEY);
+        String rules = dataSample.getDecryptionRules();
+        String encFile = AESUtil.Encrypt(dataContent,AESUtil.transTo16(rules));
         fileModel.setContent(new Binary(encFile.getBytes()));
         fileModel.setSize(encFile.getBytes().length);
         try {
