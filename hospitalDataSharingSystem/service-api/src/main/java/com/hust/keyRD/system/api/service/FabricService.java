@@ -434,7 +434,7 @@ public interface FabricService {
      *
      * @param username 解密用户
      * @param fileId   文件id
-     * @param dataHash 文件hash
+     * @param dataHash 文件hashSAsxaAA
      * @return
      */
     String crossChannelJudgement(String username, String fileId, String dataHash);

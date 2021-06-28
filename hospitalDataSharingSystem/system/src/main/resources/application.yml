@@ -1,6 +1,6 @@
 server:
   address: 0.0.0.0
-  port: 8070
+  port: 8071
   connection-timeout: 18000000
 
 spring:
