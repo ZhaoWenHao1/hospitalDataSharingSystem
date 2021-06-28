@@ -8,6 +8,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class HashUtil {
+
+
     /**
      * 计算字符串的hash值
      * @param string    明文

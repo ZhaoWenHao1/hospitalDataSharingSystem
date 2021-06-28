@@ -14,8 +14,6 @@ public interface FabricFeignService {
     @GetMapping("/add/")
     String add(@RequestParam("a") int a, @RequestParam("b") int b);
 
-
-
     @PostMapping("/invokeChaincode")
     Response invokeChaincodeTest(@RequestParam("requestor") String requester, @RequestParam("invoke_peers") String peers, @RequestParam("channel_name") String channelName, @RequestParam("cc_name") String ccName,
                                  @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);

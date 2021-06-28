@@ -742,7 +742,8 @@ public class FabricServiceImpl implements FabricService {
         if (response != null || response.contains("success") || response.contains("already exists")) {
             return true;
         } else {
-            return false;
+            throw new FabricException("文件加密策略上链失败");
+//            return false;
         }
     }
 
@@ -774,7 +775,12 @@ public class FabricServiceImpl implements FabricService {
         args.add(applierName);
         args.add(attr);
         String response = fabricFeignService.applyForAttribute(requester, channelName, peers, ccName, fcn, args).body().toString();
-        return true;
+        if(response.startsWith("{")){
+            return true;
+        }
+        else {
+            throw new FabricException("申请权限失败");
+        }
     }
 
     @Override
