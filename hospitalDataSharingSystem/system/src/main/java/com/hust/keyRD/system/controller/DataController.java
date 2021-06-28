@@ -65,7 +65,6 @@ public class DataController {
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
         String rules = params.get("rules");
-//        System.out.println(AESUtil.transTo16(rules));
         String encFile = AESUtil.Encrypt(new String(file.getBytes()), AESUtil.transTo16(rules));
         try {
             // 文件保存到mongoDB

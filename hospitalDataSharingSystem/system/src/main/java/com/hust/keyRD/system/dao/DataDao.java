@@ -2,7 +2,6 @@ package com.hust.keyRD.system.dao;
 
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.DataSample;
-import com.hust.keyRD.commons.vo.DataSampleGroupByChannelVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
