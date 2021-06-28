@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 
-@FeignClient(name = "fabric", url = "http://211.69.198.55:8000")
+@FeignClient(name = "fabric", url = "http://211.69.198.53:8000")
 public interface FabricFeignService {
     @GetMapping("/add/")
     String add(@RequestParam("a") int a, @RequestParam("b") int b);
@@ -49,13 +49,37 @@ public interface FabricFeignService {
     @PostMapping("/argsTest/")
     String argsTest(@RequestParam("peers") String peers, @RequestParam("channel_name") String channelName, @RequestParam("cc_name") String ccName,
                     @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
-    
+
     @PostMapping("/trace_forward")
-    String traceForwardCrossChain(@RequestParam("requestor") String requester,@RequestParam("listen_peer") String listenPeers, @RequestParam("invoke_peers") String peers, @RequestParam("src_channel") String channelName, @RequestParam("cc_name") String ccName,
+    String traceForwardCrossChain(@RequestParam("requestor") String requester, @RequestParam("listen_peer") String listenPeers, @RequestParam("invoke_peers") String peers, @RequestParam("src_channel") String channelName, @RequestParam("cc_name") String ccName,
                                   @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
-    
+
     @PostMapping("/pullFileAcrossChannel")
-    String pullFileAcrossChannel(@RequestParam("requestor") String requester,@RequestParam("listen_peer") String listenPeers, @RequestParam("invoke_peers") String peers, @RequestParam("src_channel") String channelName, @RequestParam("cc_name") String ccName,
+    String pullFileAcrossChannel(@RequestParam("requestor") String requester, @RequestParam("listen_peer") String listenPeers, @RequestParam("invoke_peers") String peers, @RequestParam("src_channel") String channelName, @RequestParam("cc_name") String ccName,
                                  @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
+
+
+    // 文件加密策略上链
+    @GetMapping("addCryptographAndPolicy")
+    Response addEncryptionPolicy(@RequestParam("requestor") String requester, @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers, @RequestParam("cc_name") String ccName,
+                                 @RequestParam("fcn") String fcn, @RequestParam("policy_root") String policy, @RequestParam("args") List<String> args);
+
+    // 新增用户
+    @GetMapping("addUser")
+    Response addUser(@RequestParam("requestor") String requester, @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers, @RequestParam("cc_name") String ccName,
+                     @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
+
+    // 申请权限
+    @GetMapping("askForPermissions")
+    Response applyForAttribute(@RequestParam("requestor") String requester, @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers, @RequestParam("cc_name") String ccName,
+                               @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
+
+    // 属性审核  如果通过就把解密信息上链
+    @GetMapping("addCryptograph")
+    Response crossChannelJudgement(@RequestParam("requestor") String requester, @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers, @RequestParam("cc_name") String ccName,
+                                   @RequestParam("fcn") String fcn, @RequestParam("args") List<String> args);
+
+//    @GetMapping("viewAllDecryptionOperationNumbersOfTheFile")
+//    Response getDateRecord()
 
 }
