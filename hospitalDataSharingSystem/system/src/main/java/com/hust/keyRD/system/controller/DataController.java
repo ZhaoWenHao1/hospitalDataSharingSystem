@@ -3,10 +3,7 @@ package com.hust.keyRD.system.controller;
 import com.auth0.jwt.JWT;
 import com.hust.keyRD.commons.Dto.ShareResult;
 import com.hust.keyRD.commons.constant.SystemConstant;
-import com.hust.keyRD.commons.entities.Channel;
-import com.hust.keyRD.commons.entities.CommonResult;
-import com.hust.keyRD.commons.entities.DataSample;
-import com.hust.keyRD.commons.entities.User;
+import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.utils.AESUtil;
@@ -18,6 +15,7 @@ import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
+import com.hust.keyRD.system.service.RecordService;
 import com.hust.keyRD.system.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -50,6 +48,8 @@ public class DataController {
     private FileService fileService;
     @Resource
     private ChannelService channelService;
+    @Resource
+    private RecordService recordService;
 
     //上传文件
     @CheckToken
@@ -94,6 +94,19 @@ public class DataController {
             dataSample.setFrom(-1);
             System.out.println(dataSample);
             dataService.uploadFile(dataSample);
+            String lastTx = "0", thisTx = recordService.generateTxId(dataSample.getId());
+            //记录
+            Record record = new Record();
+            String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
+            record.setHashData(dataSample.hashCode() + "");
+            record.setSrcChain(channelName);
+            record.setDstChain(channelName);
+            record.setUser(user.getUsername());
+            record.setDataId(dataSample.getId());
+            record.setTypeTx("add");
+            record.setThisTxId(thisTx);
+            record.setLastTxId(lastTx);
+            recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
          log.info("************fabric上传文件操作记录区块链结束*****************");
@@ -105,8 +118,11 @@ public class DataController {
 
     //获取文件列表  //这里获取所有通道的所有文件
     @GetMapping(value = "/data/getDataList")
-    public CommonResult getDataList() {
-        Map<Integer, List<DataSample>> map = dataService.getDataListGroupByChannel();
+    public CommonResult getDataList(HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        Map<Integer, List<DataSample>> map = dataService.getDataListGroupByChannel(originUserId);
         Map<String, List<DataSample>> res = new HashMap<>();
         for (Map.Entry<Integer, List<DataSample>> entry:map.entrySet()) {
             String channelName = channelService.findChannelById(entry.getKey()).getChannelName();
@@ -119,6 +135,7 @@ public class DataController {
     @CheckToken
     @PostMapping(value = "/data/decData")
     @ResponseBody
+    @Transactional(rollbackFor = Exception.class)
     public CommonResult decData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest){
         Integer dataId = Integer.valueOf(params.get("dataId"));
         DataSample dataSample = dataService.findDataById(dataId);
@@ -152,6 +169,7 @@ public class DataController {
             newDataSample.setDataSize(dataSample.getDataSize());
             newDataSample.setMongoId(f.getId());
             newDataSample.setOriginUserId(originUserId);
+            newDataSample.setChannelId(dataSample.getChannelId());
             newDataSample.setDataType(dataSample.getDataType());
             //初次创建时将初始时间和修改时间写成一样
             newDataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
@@ -159,6 +177,21 @@ public class DataController {
             newDataSample.setDecryptionRules(dataSample.getDecryptionRules());
             newDataSample.setFrom(dataSample.getId());
             dataService.uploadFile(newDataSample);
+            //记录
+            Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
+            String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+            String  thisTx = recordService.generateTxId(newDataSample.getId());
+            Record record = new Record();
+            String channelName = channelService.findChannelById(newDataSample.getChannelId()).getChannelName();
+            record.setHashData(newDataSample.hashCode() + "");
+            record.setSrcChain(channelName);
+            record.setDstChain(channelName);
+            record.setUser(user.getUsername());
+            record.setDataId(newDataSample.getId());
+            record.setTypeTx("add");
+            record.setThisTxId(thisTx);
+            record.setLastTxId(lastTx);
+            recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             log.info("************fabric上传文件操作记录区块链结束*****************");
         } catch (Exception e) {
@@ -170,8 +203,11 @@ public class DataController {
     // 获取data列表
     @ApiOperation("获取以channel分类的data列表")
     @GetMapping("/data/getGroupedDataList")
-    public CommonResult<Map<Channel, List<DataSample>>> getGroupedDataList(){
-        Map<Channel, List<DataSample>> groupedDataList = dataService.getGroupedDataList();
+    public CommonResult<Map<Channel, List<DataSample>>> getGroupedDataList(HttpServletRequest httpServletRequest){
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        Map<Channel, List<DataSample>> groupedDataList = dataService.getGroupedDataList(originUserId);
         return new CommonResult<>(200, "success", groupedDataList);
     }
 
@@ -182,6 +218,7 @@ public class DataController {
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        User user = userService.findUserById(originUserId);
         DataSample dataSample = dataService.findDataById(id);
         if(!dataSample.getOriginUserId().equals(originUserId)){
             return new CommonResult<>(400, "这不是你的文件，获取失败");
@@ -190,6 +227,21 @@ public class DataController {
         //System.out.println(dataContent);
         String rules = dataSample.getDecryptionRules();
         String res = AESUtil.Decrypt(dataContent,AESUtil.transTo16(rules));
+        //记录
+        Record lastRecord = recordService.findRecentByDataId(id);
+        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+        String  thisTx = recordService.generateTxId(id);
+        Record record = new Record();
+        String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
+        record.setHashData(dataSample.hashCode() + "");
+        record.setSrcChain(channelName);
+        record.setDstChain(channelName);
+        record.setUser(user.getUsername());
+        record.setDataId(dataSample.getId());
+        record.setTypeTx("read");
+        record.setThisTxId(thisTx);
+        record.setLastTxId(lastTx);
+        recordService.addRecord(record);
         return new CommonResult<>(200, "success", res);
     }
 
@@ -200,7 +252,11 @@ public class DataController {
     @ResponseBody
     @Transactional
     // TODO
-    public CommonResult updateData(@RequestBody Map<String, String> params) throws Exception {
+    public CommonResult updateData(@RequestBody Map<String, String> params,HttpServletRequest httpServletRequest) throws Exception {
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        User user = userService.findUserById(originUserId);
         Integer dataId = Integer.valueOf(params.get("dataId"));
         String dataContent = params.get("dataContent");
         DataSample dataSample = dataService.findDataById(dataId);
@@ -230,11 +286,25 @@ public class DataController {
         dataSample.setDataSize(size);
         dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
         dataService.updateFile(dataSample);
-
+        //记录
+        Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
+        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+        String  thisTx = recordService.generateTxId(dataSample.getId());
+        Record record = new Record();
+        String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
+        record.setHashData(dataSample.hashCode() + "");
+        record.setSrcChain(channelName);
+        record.setDstChain(channelName);
+        record.setUser(user.getUsername());
+        record.setDataId(dataSample.getId());
+        record.setTypeTx("modify");
+        record.setThisTxId(thisTx);
+        record.setLastTxId(lastTx);
+        recordService.addRecord(record);
         // 3. 更新hash值到fabric 二次上链
 
         log.info("************fabric更新文件操作记录区块链结束*****************");
-        return new CommonResult<>(200, "id为：" + dataId + "的文件更新成功\r\ntxId：", null);
+        return new CommonResult<>(200, "id为：" + dataId + "的文件更新成功\r\ntxId：", dataSample);
     }
 
     

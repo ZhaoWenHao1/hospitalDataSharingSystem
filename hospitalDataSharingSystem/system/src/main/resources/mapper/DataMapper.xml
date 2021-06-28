@@ -23,7 +23,11 @@
     </insert>
     <!--获取文件列表-->
     <select id="getDataList" parameterType="Map" resultMap="BaseResultMap">
-        select * from data_sample;
+        select * from data_sample order by modified_time desc;
+    </select>
+    <!--获取文件列表-->
+    <select id="getDataListExceptMe" parameterType="Integer" resultMap="BaseResultMap">
+        select * from data_sample where origin_user_id != #{userId} order by modified_time desc;
     </select>
     <!--根据文件id删除文件-->
     <delete id="deleteDataById" parameterType="Integer">
@@ -40,7 +44,7 @@
     <!--获取文件列表-->
     <select id="getDataListByOriginUserId" parameterType="Map" resultMap="BaseResultMap">
         select * from data_sample
-        where origin_user_id=#{originUserId};
+        where origin_user_id=#{originUserId} order by modified_time desc;
     </select>
     
     <select id="getUserInnerDataListByUserIdAndChannelId" parameterType="Map" resultType="UserInnerDataDto">

@@ -33,7 +33,7 @@ public interface DataService {
     List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(Integer userId, Integer channelId);
 
 
-    Map<Channel, List<DataSample>> getGroupedDataList();
+    Map<Channel, List<DataSample>> getGroupedDataList(Integer originUserId);
 
-    Map<Integer, List<DataSample>> getDataListGroupByChannel();
+    Map<Integer, List<DataSample>> getDataListGroupByChannel(Integer originUserId);
 }
