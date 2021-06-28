@@ -64,7 +64,8 @@ public class DataController {
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
-        String encFile = AESUtil.Encrypt(file.getContentType(), SystemConstant.FILE_KEY);
+        String rules = params.get("rules");
+        String encFile = AESUtil.Encrypt(new String(file.getBytes()), AESUtil.transTo16(rules));
         try {
             // 文件保存到mongoDB
             FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), encFile.length(),
@@ -76,7 +77,7 @@ public class DataController {
             dataSample.setDataName(fileName);
             //文件大小以KB作为单位
             // 首先先将.getSize()获取的Long转为String 单位为B
-            Double size = Double.parseDouble(String.valueOf(file.getSize()));
+            double size = Double.parseDouble(String.valueOf(file.getSize()));
             BigDecimal b = new BigDecimal(size);
             // 2表示2位 ROUND_HALF_UP表明四舍五入，
             size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
@@ -88,7 +89,7 @@ public class DataController {
             //初次创建时将初始时间和修改时间写成一样
             dataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
             dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
-            dataSample.setDecryptionRules(params.get("rules"));
+            dataSample.setDecryptionRules(rules);
             dataSample.setChannelId(user.getChannelId());
             dataSample.setFrom(-1);
             System.out.println(dataSample);
@@ -174,6 +175,24 @@ public class DataController {
         return new CommonResult<>(200, "success", groupedDataList);
     }
 
+    // 获取data列表
+    @ApiOperation("获取文件内容")
+    @GetMapping("/data/getDataContent")
+    public CommonResult<String> getDataContent(Integer id,HttpServletRequest httpServletRequest) throws Exception {
+        // 从 http 请求头中取出 token
+        String token = httpServletRequest.getHeader("token");
+        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+        DataSample dataSample = dataService.findDataById(id);
+        if(!dataSample.getOriginUserId().equals(originUserId)){
+            return new CommonResult<>(400, "这不是你的文件，获取失败");
+        }
+        String dataContent = new String(fileService.getFileById(dataSample.getMongoId()).get().getContent().getData());
+        //System.out.println(dataContent);
+        String rules = dataSample.getDecryptionRules();
+        String res = AESUtil.Decrypt(dataContent,AESUtil.transTo16(rules));
+        return new CommonResult<>(200, "success", res);
+    }
+
 
     //根据文件id对文件内容进行更新
     @CheckToken
@@ -181,10 +200,7 @@ public class DataController {
     @ResponseBody
     @Transactional
     // TODO
-    public CommonResult updateData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) throws Exception {
-        // 从 http 请求头中取出 token
-        String token = httpServletRequest.getHeader("token");
-        Integer originUserId = JWT.decode(token).getClaim("id").asInt();
+    public CommonResult updateData(@RequestBody Map<String, String> params) throws Exception {
         Integer dataId = Integer.valueOf(params.get("dataId"));
         String dataContent = params.get("dataContent");
         DataSample dataSample = dataService.findDataById(dataId);
@@ -196,7 +212,8 @@ public class DataController {
         // 2. 修改文件
         // 更新mongoDB
         FileModel fileModel = fileService.getFileById(dataSample.getMongoId()).orElseThrow(MongoDBException::new);
-        String encFile = AESUtil.Encrypt(dataContent,SystemConstant.FILE_KEY);
+        String rules = dataSample.getDecryptionRules();
+        String encFile = AESUtil.Encrypt(dataContent,AESUtil.transTo16(rules));
         fileModel.setContent(new Binary(encFile.getBytes()));
         fileModel.setSize(encFile.getBytes().length);
         try {

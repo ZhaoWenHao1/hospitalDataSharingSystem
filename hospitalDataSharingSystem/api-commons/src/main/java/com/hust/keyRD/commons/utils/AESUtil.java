@@ -72,6 +72,17 @@ public class AESUtil
         }
     }
 
+    public static String transTo16(String str){
+        if(str.length()<=16){
+            StringBuilder stringBuilder = new StringBuilder(str);
+            while (stringBuilder.length()<16){
+                stringBuilder.append("#");
+            }
+            return stringBuilder.toString();
+        }else {
+            return str.substring(0,16);
+        }
+    }
     public static void main(String[] args)
             throws Exception
     {
