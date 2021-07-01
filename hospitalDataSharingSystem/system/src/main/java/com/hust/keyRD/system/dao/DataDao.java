@@ -29,4 +29,6 @@ public interface DataDao {
      * @return
      */
     List<UserInnerDataDto> getUserInnerDataListByUserIdAndChannelId(@Param("userId") Integer userId, @Param("channelId")Integer channelId);
+
+    List<DataSample> getDataListExceptMe(Integer userId);
 }

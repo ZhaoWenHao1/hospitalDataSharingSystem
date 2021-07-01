@@ -8,6 +8,7 @@ import com.hust.keyRD.commons.vo.RecordVO;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
+import com.hust.keyRD.system.service.RecordService;
 import com.hust.keyRD.system.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +30,8 @@ public class TraceController {
     private ChannelService channelService;
     @Resource
     private UserService userService;
+    @Resource
+    private RecordService recordService;
 
     //根据文件id获取该文件的最新操作
     @PostMapping(value = "/trace/traceBackward")
@@ -71,14 +74,15 @@ public class TraceController {
     //一次性获取指定文件所有溯源操作记录
     @PostMapping(value = "/trace/traceBackwardForAll")
     public CommonResult traceBackwardForAll(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
-        String dataId = params.get("dataId");
+        Integer dataId = Integer.parseInt(params.get("dataId"));
 //        List<Record> result = new LinkedList<>();
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(userId);
         Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
         String channelName = channelService.findChannelById(channelId).getChannelName();
-        List<Record> records = traceBackwardAll(user.getUsername(), channelName, dataId);
+//        List<Record> records = traceBackwardAll(user.getUsername(), channelName, dataId);
+        List<Record> records = traceAll(dataId);
         String fileName = "";
         List<RecordVO> recordVOList = new ArrayList<>();
         for (Record record : records) {
@@ -95,15 +99,25 @@ public class TraceController {
         return new CommonResult<>(200, "获取该文件的所有溯源记录成功", recordVOList);
     }
 
-    private List<Record> traceBackwardAll(String requester, String channelName, String fileId) {
+    private List<Record> traceAll(Integer dataId){
         List<Record> ans = new ArrayList<>();
-        Record record = fabricService.traceBackward(requester, channelName, fileId);
+        Record record = recordService.findRecentByDataId(dataId);
         ans.add(record);
-        while (!record.getLastTxId().equals("0")) {
-            record = fabricService.traceBackward(requester, channelName, fileId, record.getThisTxId());
+        while(!record.getLastTxId().equals("0")){
+            record = recordService.findByThisTx(record.getLastTxId());
             ans.add(record);
         }
         return ans;
     }
+//    private List<Record> traceBackwardAll(String requester, String channelName, String fileId) {
+//        List<Record> ans = new ArrayList<>();
+//        Record record = fabricService.traceBackward(requester, channelName, fileId);
+//        ans.add(record);
+//        while (!record.getLastTxId().equals("0")) {
+//            record = fabricService.traceBackward(requester, channelName, fileId, record.getThisTxId());
+//            ans.add(record);
+//        }
+//        return ans;
+//    }
 
 }

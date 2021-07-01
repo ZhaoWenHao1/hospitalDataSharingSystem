@@ -72,8 +72,8 @@ public class DataServiceImpl implements DataService
 
     
     @Override
-    public Map<Channel, List<DataSample>> getGroupedDataList() {
-        List<DataSample> allData = getDataList();
+    public Map<Channel, List<DataSample>> getGroupedDataList(Integer originUserId) {
+        List<DataSample> allData = getDataListExceptMe(originUserId);
         Map<Integer, List<DataSample>> collect = allData.stream().collect(Collectors.groupingBy(DataSample::getChannelId));
         Map<Channel, List<DataSample>> result = new HashMap<>();
         collect.forEach((k,v) ->{
@@ -83,9 +83,13 @@ public class DataServiceImpl implements DataService
         return result;
     }
 
+    private List<DataSample> getDataListExceptMe(Integer userId) {
+        return dataDao.getDataListExceptMe(userId);
+    }
+
     @Override
-    public Map<Integer, List<DataSample>> getDataListGroupByChannel() {
-        List<DataSample> dataList = dataDao.getDataList();
+    public Map<Integer, List<DataSample>> getDataListGroupByChannel(Integer originUserId) {
+        List<DataSample> dataList = dataDao.getDataListExceptMe(originUserId);
         Map<Integer, List<DataSample>> collect = dataList.stream().collect(Collectors.groupingBy(DataSample::getChannelId));
         return collect;
     }
