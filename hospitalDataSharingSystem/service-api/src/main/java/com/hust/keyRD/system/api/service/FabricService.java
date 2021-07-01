@@ -408,6 +408,7 @@ public interface FabricService {
      * @param channelName 文件所在channel
      * @return
      */
+    // uncheck
     boolean addEncryptionPolicy(String fileId, String dataHash, String policy, String channelName);
 
     /**
@@ -437,6 +438,7 @@ public interface FabricService {
      * @param dataHash 文件hashSAsxaAA
      * @return
      */
+    // uncheck
     String crossChannelJudgement(String username, String fileId, String dataHash);
 
 }

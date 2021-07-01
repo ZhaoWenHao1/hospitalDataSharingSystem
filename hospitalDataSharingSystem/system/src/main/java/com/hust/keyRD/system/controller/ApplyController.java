@@ -1,8 +1,8 @@
 package com.hust.keyRD.system.controller;
 
 
-import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.JWT;
+import com.hust.keyRD.commons.Dto.Attribute;
 import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.entities.CommonResult;
@@ -16,7 +16,10 @@ import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -90,7 +93,7 @@ public class ApplyController {
             User applier = userService.findUserById(hasDownApply.getApplierId());
             User targetUser = userService.findUserById(hasDownApply.getTargetUserId());
             log.info("************fabric申请权限开始*****************");
-            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), attribute);
+            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
             log.info("************fabric申请权限结束*****************");
             //不包含属性时才进行添加
             if(!applier.getAttributes().contains(attribute)) {

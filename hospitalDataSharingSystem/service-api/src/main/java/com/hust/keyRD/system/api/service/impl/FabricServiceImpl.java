@@ -733,12 +733,12 @@ public class FabricServiceImpl implements FabricService {
         args.add(dataHash);
         args.add(fileId);
         args.add(channelName);
-
+//        args.add(policy);
         if (channelName.equals("channel1")) {
             requester = "org2_admin";
             peers = "peer0.org2.example.com";
         }
-        String response = fabricFeignService.addEncryptionPolicy(requester, channelName, peers, ccName, fcn, ccName, args).body().toString();
+        String response = fabricFeignService.addEncryptionPolicy(requester, channelName, peers, ccName, fcn, policy, args).body().toString();
         if (response != null || response.contains("success") || response.contains("already exists")) {
             return true;
         } else {
@@ -760,7 +760,11 @@ public class FabricServiceImpl implements FabricService {
         args.add(channelName);
         args.add(attrs);
         String response = fabricFeignService.addUser(requester, channelName, peers, ccName, fcn, args).body().toString();
-        return true;
+        if (response.contains("attr_array")) {
+            return true;
+        } else {
+            throw new FabricException("新增用户出错：" + response);
+        }
     }
 
     @Override

@@ -9,6 +9,7 @@
         <id column="channel_id" property="channelId" jdbcType="INTEGER"/>
         <id column="is_admin" property="isAdmin" jdbcType="INTEGER"/>
         <id column="fabric_user_id" property="fabricUserId" jdbcType="VARCHAR"/>
+        <id column="attributes" property="attributes" jdbcType="VARCHAR"/>
     </resultMap>
     <!--根据id找User-->
     <select id="findUserById" parameterType="Integer" resultMap="BaseResultMap">
