@@ -1,12 +1,6 @@
 package com.hust.keyRD.system.controller;
 
 import com.auth0.jwt.JWT;
-import com.hust.keyRD.commons.entities.Channel;
-import com.hust.keyRD.commons.entities.CommonResult;
-import com.hust.keyRD.commons.entities.DataSample;
-import com.hust.keyRD.commons.entities.User;
-import com.hust.keyRD.commons.Dto.ShareResult;
-import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
@@ -117,7 +111,7 @@ public class DataController {
             recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
-            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
+//            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
             log.info("************fabric上传文件加密策略结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
@@ -160,9 +154,13 @@ public class DataController {
 //        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
         log.info("************fabric申请文件解结束*****************");
         //模拟检查属性是否满足
+        if (!dataService.checkDecAttr(dataSample.getDecryptionRules(), user.getAttributes())) {
+            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+        }
 //        if(StringUtils.isEmpty(txId)){
 //            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
 //        }
+
         // 2. 读取文件
         String fileContent = new String(Objects.requireNonNull(fileService.getFileById(dataSample.getMongoId())
                 .map(FileModel::getContent)

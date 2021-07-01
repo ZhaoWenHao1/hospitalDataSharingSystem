@@ -3,6 +3,7 @@ package com.hust.keyRD.system.service;
 import com.hust.keyRD.commons.Dto.UserInnerDataDto;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.DataSample;
+
 import java.util.List;
 import java.util.Map;
 
@@ -36,4 +37,14 @@ public interface DataService {
     Map<Channel, List<DataSample>> getGroupedDataList(Integer originUserId);
 
     Map<Integer, List<DataSample>> getDataListGroupByChannel(Integer originUserId);
+
+    /**
+     * 检查用户是否有解密属性
+     *
+     * @param policy   文件加密策略 例如：teacher and (chemistry or computer)
+     * @param userAttr 用户属性 例如：position:teacher,academy:agriculture
+     * @return
+     */
+    boolean checkDecAttr(String policy, String userAttr);
+
 }
