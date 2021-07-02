@@ -33,43 +33,43 @@ public class TraceController {
     @Resource
     private RecordService recordService;
 
-    //根据文件id获取该文件的最新操作
-    @PostMapping(value = "/trace/traceBackward")
-    public CommonResult traceBackward(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
-        String dataId = params.get("dataId");
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        User user = userService.findUserById(userId);
-        Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
-        String channelName = channelService.findChannelById(channelId).getChannelName();
-        Record record = fabricService.traceBackward(user.getUsername(), channelName, dataId);
-        record.setUser(user.getUsername());
-        RecordVO recordVO = new RecordVO();
-        recordVO.setRecord(record);
-        recordVO.setFileName(dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName());
-        return new CommonResult<>(200, "溯源成功", recordVO);
-    }
-
-    //根据文件id和txId获取该文件的上一次操作
-    @PostMapping(value = "/trace/traceBackwardAgain")
-    public CommonResult traceBackwardAgain(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
-        String dataId = params.get("dataId");
-        String token = httpServletRequest.getHeader("token");
-        Integer userId = JWT.decode(token).getClaim("id").asInt();
-        User user = userService.findUserById(userId);
-        Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
-        String channelName = channelService.findChannelById(channelId).getChannelName();
-        String txId = params.get("txId");
-        if (txId.equals("0")) {
-            return new CommonResult<>(404, "该记录已经是最早的记录，无更早的记录", null);
-        }
-        Record record = fabricService.traceBackward(user.getUsername(), channelName, dataId, txId);
-        RecordVO recordVO = new RecordVO();
-        record.setUser(user.getUsername());
-        recordVO.setRecord(record);
-        recordVO.setFileName(dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName());
-        return new CommonResult<>(200, "溯源成功", recordVO);
-    }
+//    //根据文件id获取该文件的最新操作
+//    @PostMapping(value = "/trace/traceBackward")
+//    public CommonResult traceBackward(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
+//        String dataId = params.get("dataId");
+//        String token = httpServletRequest.getHeader("token");
+//        Integer userId = JWT.decode(token).getClaim("id").asInt();
+//        User user = userService.findUserById(userId);
+//        Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
+//        String channelName = channelService.findChannelById(channelId).getChannelName();
+//        Record record = fabricService.traceBackward(user.getUsername(), channelName, dataId);
+//        record.setUser(user.getUsername());
+//        RecordVO recordVO = new RecordVO();
+//        recordVO.setRecord(record);
+//        recordVO.setFileName(dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName());
+//        return new CommonResult<>(200, "溯源成功", recordVO);
+//    }
+//
+//    //根据文件id和txId获取该文件的上一次操作
+//    @PostMapping(value = "/trace/traceBackwardAgain")
+//    public CommonResult traceBackwardAgain(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest) {
+//        String dataId = params.get("dataId");
+//        String token = httpServletRequest.getHeader("token");
+//        Integer userId = JWT.decode(token).getClaim("id").asInt();
+//        User user = userService.findUserById(userId);
+//        Integer channelId = dataService.findDataById(Integer.valueOf(dataId)).getChannelId();
+//        String channelName = channelService.findChannelById(channelId).getChannelName();
+//        String txId = params.get("txId");
+//        if (txId.equals("0")) {
+//            return new CommonResult<>(404, "该记录已经是最早的记录，无更早的记录", null);
+//        }
+//        Record record = fabricService.traceBackward(user.getUsername(), channelName, dataId, txId);
+//        RecordVO recordVO = new RecordVO();
+//        record.setUser(user.getUsername());
+//        recordVO.setRecord(record);
+//        recordVO.setFileName(dataService.findDataById(Integer.valueOf(record.getDataId())).getDataName());
+//        return new CommonResult<>(200, "溯源成功", recordVO);
+//    }
 
     //一次性获取指定文件所有溯源操作记录
     @PostMapping(value = "/trace/traceBackwardForAll")
