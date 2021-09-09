@@ -76,3 +76,6 @@ logging:
       spring:
         jiminshiro:
           mapper: debug
+
+dcpabe:
+  filePath: classpath:abe/

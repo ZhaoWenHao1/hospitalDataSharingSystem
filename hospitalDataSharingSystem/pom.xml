@@ -13,6 +13,7 @@
         <module>service-api</module>
         <module>sgx-simulator</module>
         <module>common-redis</module>
+        <module>dcpabe</module>
     </modules>
     <packaging>pom</packaging>
 

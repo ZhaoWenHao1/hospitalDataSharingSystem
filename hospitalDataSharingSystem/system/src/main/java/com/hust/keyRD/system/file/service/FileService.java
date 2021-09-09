@@ -28,6 +28,13 @@ public interface FileService {
     Optional<FileModel> getFileById(String id);
 
     /**
+     * 根据文件名获取一个文件
+     * @param fileName
+     * @return
+     */
+    Optional<FileModel> getFileByName(String fileName);
+
+    /**
      * 分页查询，按上传时间降序
      * @return
      */

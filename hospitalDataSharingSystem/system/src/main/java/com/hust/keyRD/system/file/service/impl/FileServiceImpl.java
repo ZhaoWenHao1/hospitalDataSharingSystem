@@ -5,10 +5,7 @@ import com.hust.keyRD.system.file.dao.FileRepository;
 import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
@@ -39,6 +36,15 @@ public class FileServiceImpl implements FileService {
     @Override
     public Optional<FileModel> getFileById(String id) {
         return fileRepository.findById(id);
+    }
+
+    @Override
+    public Optional<FileModel> getFileByName(String fileName) {
+        FileModel fileModel = new FileModel();
+        fileModel.setName(fileName);
+        ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("size");
+        Example<FileModel> example = Example.of(fileModel, matcher);
+        return fileRepository.findOne(example);
     }
 
     @Override
