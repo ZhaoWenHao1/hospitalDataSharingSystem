@@ -111,11 +111,7 @@ public class DataController {
             recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
-<<<<<<< HEAD
 //            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
-=======
-//            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, Attribute.getAttrs(rules), "channel1");
->>>>>>> 74a43a8 (增加abe并序列化)
             log.info("************fabric上传文件加密策略结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
@@ -129,7 +125,7 @@ public class DataController {
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
-        Map<Integer, List<DataSample>> map = dataService.getDataListGroupByChannel(originUserId);
+        Map<Integer, List<DataSample>> map = dataService.getDataListGroupByChannel(Integer.valueOf(originUserId));
         Map<String, List<DataSample>> res = new HashMap<>();
         for (Map.Entry<Integer, List<DataSample>> entry:map.entrySet()) {
             String channelName = channelService.findChannelById(entry.getKey()).getChannelName();
@@ -158,7 +154,6 @@ public class DataController {
 //        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
         log.info("************fabric申请文件解结束*****************");
         //模拟检查属性是否满足
-<<<<<<< HEAD
         if (!dataService.checkDecAttr(dataSample.getDecryptionRules(), user.getAttributes())) {
             return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
         }
@@ -166,11 +161,6 @@ public class DataController {
 //            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
 //        }
 
-=======
-//        if(StringUtils.isEmpty(txId)){
-//            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
-//        }
->>>>>>> 74a43a8 (增加abe并序列化)
         // 2. 读取文件
         String fileContent = new String(Objects.requireNonNull(fileService.getFileById(dataSample.getMongoId())
                 .map(FileModel::getContent)
