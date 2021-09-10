@@ -2,6 +2,9 @@ package com.hust.keyRD.system.utils;
 
 import com.hust.keyRD.system.file.model.FileModel;
 import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.crypto.DataLengthException;
+import org.bouncycastle.crypto.InvalidCipherTextException;
+import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
@@ -10,9 +13,9 @@ import sg.edu.ntu.sce.sands.crypto.dcpabe.ac.AccessStructure;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.key.PersonalKey;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.key.PublicKey;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.key.SecretKey;
+import sg.edu.ntu.sce.sands.crypto.utility.Utility;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.util.Map;
 import java.util.Objects;
 
@@ -82,7 +85,7 @@ public class AbeUtil {
      * @param policy 加密策略
      * @return
      */
-    public Ciphertext encrypt(byte[] data, String policy) {
+    public ByteArrayOutputStream encrypt(byte[] data, String policy) throws IOException, InvalidCipherTextException {
         Message message = new Message(data);
         AccessStructure as = AccessStructure.buildFromPolicy(policy);
         if (gp == null) {
@@ -93,8 +96,21 @@ public class AbeUtil {
         }
         PublicKeys pKeys = new PublicKeys();
         pKeys.subscribeAuthority(publicKeys);
-        Ciphertext ciphertext = DCPABE.encrypt(message, as, gp, pKeys);
-        return ciphertext;
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ObjectOutputStream oos = new ObjectOutputStream(bos);
+
+        ByteArrayInputStream byteIs = new ByteArrayInputStream(data);
+        BufferedInputStream bis = new BufferedInputStream(byteIs);
+
+        Message m = DCPABE.generateRandomMessage(gp);
+        Ciphertext ct = DCPABE.encrypt(m, as, gp, pKeys);
+
+        oos.writeObject(ct);
+        PaddedBufferedBlockCipher aes = Utility.initializeAES(m.getM(), true);
+        encryptOrDecryptPayload(aes, bis, oos);
+        oos.flush();
+        return bos;
     }
 
     /**
@@ -132,12 +148,45 @@ public class AbeUtil {
                 personalKeys.addKey(pk);
             } else {
                 log.warn(String.format("decrypt error: attr[{}] did not be granted", attr));
-                throw new RuntimeException();
+                throw new RuntimeException(String.format("decrypt error: attr[{}] did not be granted", attr));
             }
         }
 
         Message message = DCPABE.decrypt(ct, personalKeys, gp);
         return message;
+
+    }
+
+    public ByteArrayOutputStream decrypt(ByteArrayInputStream bis, String username, String[] attrs) throws IOException, ClassNotFoundException {
+        if (gp == null) {
+            initGp();
+        }
+        PersonalKeys personalKeys = new PersonalKeys(username);
+        for (String attr : attrs) {
+            String fileName = generateNameByUserAndAttr(username, attr);
+            FileModel fileModel = mongoDbUtil.getByName(fileName);
+            if (fileModel != null) {
+                PersonalKey pk = (PersonalKey) SerializeUtil.unserialize(fileModel.getContent().getData());
+                personalKeys.addKey(pk);
+            } else {
+                log.warn(String.format("decrypt error: attr[{}] did not be granted", attr));
+                throw new RuntimeException(String.format("decrypt error: attr[{}] did not be granted", attr));
+            }
+        }
+
+        ObjectInputStream oIn = new ObjectInputStream(bis);
+        Ciphertext ct = Utility.readCiphertext(oIn);
+        Message message = DCPABE.decrypt(ct, personalKeys, gp);
+        PaddedBufferedBlockCipher aes = Utility.initializeAES(message.getM(), false);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (BufferedOutputStream bos = new BufferedOutputStream(byteArrayOutputStream)) {
+            encryptOrDecryptPayload(aes, oIn, bos);
+            bos.flush();
+        } catch (InvalidCipherTextException e) {
+            e.printStackTrace();
+        }
+
+        return byteArrayOutputStream;
 
     }
 
@@ -207,6 +256,19 @@ public class AbeUtil {
             }
         }
     }
+
+    private static void encryptOrDecryptPayload(PaddedBufferedBlockCipher cipher, InputStream is, OutputStream os) throws DataLengthException, IllegalStateException, InvalidCipherTextException, IOException {
+        byte[] inBuff = new byte[cipher.getBlockSize()];
+        byte[] outBuff = new byte[cipher.getOutputSize(inBuff.length)];
+        int nbytes;
+        while (-1 != (nbytes = is.read(inBuff, 0, inBuff.length))) {
+            int length1 = cipher.processBytes(inBuff, 0, nbytes, outBuff, 0);
+            os.write(outBuff, 0, length1);
+        }
+        nbytes = cipher.doFinal(outBuff, 0);
+        os.write(outBuff, 0, nbytes);
+    }
+
 
     public static String generateNameByUserAndAttr(String username, String[] attrs) {
         StringBuilder sb = new StringBuilder();
