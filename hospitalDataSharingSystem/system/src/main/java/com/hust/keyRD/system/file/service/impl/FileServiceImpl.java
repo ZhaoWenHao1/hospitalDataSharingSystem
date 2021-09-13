@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileModel saveFile(FileModel file) {
+
         return fileRepository.save(file);
     }
 
@@ -44,7 +46,13 @@ public class FileServiceImpl implements FileService {
         fileModel.setName(fileName);
         ExampleMatcher matcher = ExampleMatcher.matching().withIgnorePaths("size");
         Example<FileModel> example = Example.of(fileModel, matcher);
-        return fileRepository.findOne(example);
+        Sort sort = Sort.by(Sort.Direction.DESC, "uploadDate");
+        List<FileModel> fileModels = fileRepository.findAll(example, sort);
+        if(fileModels.size() > 0){
+            return  Optional.of(fileModels.get(0));
+        }else {
+            return Optional.empty();
+        }
     }
 
     @Override

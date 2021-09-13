@@ -16,8 +16,10 @@ import sg.edu.ntu.sce.sands.crypto.dcpabe.key.SecretKey;
 import sg.edu.ntu.sce.sands.crypto.utility.Utility;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * @program: hospitalDataSharingSystem
@@ -86,7 +88,6 @@ public class AbeUtil {
      * @return
      */
     public ByteArrayOutputStream encrypt(byte[] data, String policy) throws IOException, InvalidCipherTextException {
-        Message message = new Message(data);
         AccessStructure as = AccessStructure.buildFromPolicy(policy);
         if (gp == null) {
             initGp();
@@ -187,7 +188,17 @@ public class AbeUtil {
         }
 
         return byteArrayOutputStream;
+    }
 
+    /**
+     * 检查是否能够解密
+     * @param policy
+     * @param attrs
+     * @return
+     */
+    public boolean checkIfHaveAttr(String policy, String[] attrs){
+        AccessStructure accessStructure = AccessStructure.buildFromPolicy(policy);
+        return accessStructure.getIndexesList(Arrays.stream(attrs).collect(Collectors.toList())) != null;
     }
 
 

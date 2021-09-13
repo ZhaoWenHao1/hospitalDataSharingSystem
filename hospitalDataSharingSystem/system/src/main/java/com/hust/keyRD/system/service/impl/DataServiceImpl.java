@@ -107,8 +107,8 @@ public class DataServiceImpl implements DataService
      */
     @Override
     public boolean checkDecAttr(String policy, String userAttr) {
-        policy = policy.replaceAll("and", " && ");
-        policy = policy.replaceAll("or", " || ");
+        policy = policy.replaceAll(" and ", " && ");
+        policy = policy.replaceAll(" or ", " || ");
         policy = policy.replaceAll("\\(", " ( ");
         policy = policy.replaceAll("\\)", " ) ");
         String[] strings = policy.split("\\s");

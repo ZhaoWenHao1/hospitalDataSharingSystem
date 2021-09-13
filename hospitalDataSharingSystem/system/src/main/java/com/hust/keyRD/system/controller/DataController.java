@@ -16,6 +16,8 @@ import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
 import com.hust.keyRD.system.service.RecordService;
 import com.hust.keyRD.system.service.UserService;
+import com.hust.keyRD.system.utils.AbeUtil;
+import com.hust.keyRD.system.utils.MongoDbUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +53,10 @@ public class DataController {
     private FabricService fabricService;
     @Resource
     private RecordService recordService;
+    @Resource
+    private MongoDbUtil mongoDbUtil;
+    @Resource
+    private AbeUtil abeUtil;
 
     //上传文件
     @CheckToken
@@ -69,11 +75,7 @@ public class DataController {
         String encFile = AESUtil.Encrypt(new String(file.getBytes()), AESUtil.transTo16(rules));
         try {
             // 文件保存到mongoDB
-            FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), encFile.length(),
-                    new Binary(encFile.getBytes()));
-            String md5 = MD5Util.getMD5(file.getInputStream());
-            f.setMd5(md5);
-            fileService.saveFile(f);
+            FileModel f = mongoDbUtil.upload(abeUtil.encrypt(file.getBytes(), rules).toByteArray(),fileName);
 
             DataSample dataSample = new DataSample();
             dataSample.setDataName(fileName);
