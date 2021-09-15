@@ -1,5 +1,6 @@
 package com.hust.keyRD.system.service.impl;
 
+import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.system.dao.ChannelDao;
@@ -23,6 +24,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUser() {
         return userDao.getAllUser();
+    }
+
+    @Override
+    public List<User> getAllUserAndAdmin() {
+        return userDao.getAllUserAndAdmin();
     }
 
     @Override
@@ -75,5 +81,23 @@ public class UserServiceImpl implements UserService {
     @Override
     public List<User> getAllUsersExMe(Integer userId) {
         return userDao.getAllUsersExMe(userId);
+    }
+
+    /**
+     * 将用户的属性格式化
+     * @param allAttribute
+     * @return
+     */
+    @Override
+    public String[] formatAttr(String allAttribute){
+        String[] split = allAttribute.split(SystemConstant.SPLIT_SYMBOL);
+        String[] attrs = new String[split.length];
+        for (int i = 0;i < split.length;i++) {
+            String[] attrInfo = split[i].split(":");
+//            String attr = attrInfo[0].trim() + SystemConstant.ATTR_CONNECTOR + attrInfo[1].trim();
+            String attr = attrInfo[1].trim();
+            attrs[i] = attr;
+        }
+        return attrs;
     }
 }

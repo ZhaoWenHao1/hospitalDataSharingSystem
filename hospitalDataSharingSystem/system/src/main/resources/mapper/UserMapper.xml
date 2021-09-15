@@ -30,6 +30,9 @@
     <select id="getAllUser" parameterType="Map" resultMap="BaseResultMap" >
         select id,user_name,channel_id from user where is_admin=0 ORDER BY user_name;
     </select>
+    <select id="getAllUserAndAdmin" parameterType="Map" resultMap="BaseResultMap" >
+        select * from user;
+    </select>
     <!--找所有User-->
     <select id="getAllUsersExMe" parameterType="Map" resultMap="BaseResultMap" >
         select id,user_name,channel_id from user where id!=#{userId};

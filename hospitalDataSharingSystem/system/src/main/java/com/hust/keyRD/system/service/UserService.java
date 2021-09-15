@@ -9,6 +9,8 @@ import java.util.Map;
 public interface UserService {
     //返回所有用户
     List<User> getAllUser();
+    // 获得所有用户和管理员
+    List<User> getAllUserAndAdmin();
     //根据id查用户
     User findUserById(Integer id);
     //根据username查用户
@@ -36,4 +38,11 @@ public interface UserService {
     void updateAttributes(User user);
 
     List<User> getAllUsersExMe(Integer userId);
+
+    /**
+     * 将用户的属性格式化
+     * @param allAttribute 用户属性 at1tr:v1, attr2:v2
+     * @return [v1,v2]
+     */
+    String[] formatAttr(String allAttribute);
 }

@@ -273,7 +273,7 @@ public class DCPABETool implements Runnable {
 		}
 	}
 
-    private static void encryptOrDecryptPayload(PaddedBufferedBlockCipher cipher, InputStream is, OutputStream os) throws DataLengthException, IllegalStateException, InvalidCipherTextException, IOException {
+    public static void encryptOrDecryptPayload(PaddedBufferedBlockCipher cipher, InputStream is, OutputStream os) throws DataLengthException, IllegalStateException, InvalidCipherTextException, IOException {
         byte[] inBuff = new byte[cipher.getBlockSize()];
         byte[] outBuff = new byte[cipher.getOutputSize(inBuff.length)];
         int nbytes;

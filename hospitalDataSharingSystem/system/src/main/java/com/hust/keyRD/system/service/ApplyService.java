@@ -23,4 +23,10 @@ public interface ApplyService {
     List<ApplyVO> getUserApplyAttributes(Integer userId);
 
     List<AttributesVO> getAttributesList();
+
+    /**
+     * 获取所有属性： attrValue
+     * @return
+     */
+    List<String> getAllAttributes();
 }

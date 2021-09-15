@@ -21,6 +21,7 @@ import com.hust.keyRD.system.utils.MongoDbUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.BasicBSONCallback;
 import org.bson.types.Binary;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
@@ -72,9 +73,8 @@ public class DataController {
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
         String rules = params.get("rules");
-        String encFile = AESUtil.Encrypt(new String(file.getBytes()), AESUtil.transTo16(rules));
         try {
-            // 文件保存到mongoDB
+            // 文件加密并保存到mongoDB
             FileModel f = mongoDbUtil.upload(abeUtil.encrypt(file.getBytes(), rules).toByteArray(),fileName);
 
             DataSample dataSample = new DataSample();
@@ -85,7 +85,7 @@ public class DataController {
             BigDecimal b = new BigDecimal(size);
             // 2表示2位 ROUND_HALF_UP表明四舍五入，
             size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            // 此时size就是保留两位小数的浮点数
+            // 此时size就是保留两位小数的浮点数z
             dataSample.setDataSize(size);
             dataSample.setMongoId(f.getId());
             dataSample.setOriginUserId(originUserId);
@@ -156,24 +156,24 @@ public class DataController {
 //        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
         log.info("************fabric申请文件解结束*****************");
         //模拟检查属性是否满足
-        if (!dataService.checkDecAttr(dataSample.getDecryptionRules(), user.getAttributes())) {
+        if(!abeUtil.checkIfHaveAttr(dataSample.getDecryptionRules(), userService.formatAttr(user.getAttributes()))){
             return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
         }
+//        if (!dataService.checkDecAttr(dataSample.getDecryptionRules(), user.getAttributes())) {
+//            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+//        }
 //        if(StringUtils.isEmpty(txId)){
 //            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
 //        }
 
         // 2. 读取文件
-        String fileContent = new String(Objects.requireNonNull(fileService.getFileById(dataSample.getMongoId())
-                .map(FileModel::getContent)
-                .map(Binary::getData)
-                .orElse(null))
-        );
+        FileModel fileModel = fileService.getFileById(dataSample.getMongoId()).orElseThrow(() -> new MongoDBException("文件不存在"));
+
         try {
             // 文件保存到mongoDB
-            FileModel f = new FileModel(dataSample.getDataName(), dataSample.getDataType(), fileContent.length(),
-                    new Binary(fileContent.getBytes()));
-            f.setMd5(MD5Util.getMD5(new ByteArrayInputStream(fileContent.getBytes())));
+            FileModel f = new FileModel(dataSample.getDataName(), dataSample.getDataType(), fileModel.getSize(),
+                    fileModel.getContent());
+            f.setMd5(fileModel.getMd5());
             fileService.saveFile(f);
             DataSample newDataSample = new DataSample();
             newDataSample.setDataName(dataSample.getDataName());
@@ -211,7 +211,7 @@ public class DataController {
         } catch (Exception e) {
             return new CommonResult<>(400, e.getMessage(), null);
         }
-        return new CommonResult<>(200, "文件解密成功", fileContent);
+        return new CommonResult<>(200, "文件解密成功", new String(fileModel.getContent().getData()));
     }
 
     // 获取data列表
@@ -237,10 +237,15 @@ public class DataController {
         if(!dataSample.getOriginUserId().equals(originUserId)){
             return new CommonResult<>(400, "这不是你的文件，获取失败");
         }
-        String dataContent = new String(fileService.getFileById(dataSample.getMongoId()).get().getContent().getData());
-        //System.out.println(dataContent);
-        String rules = dataSample.getDecryptionRules();
-        String res = AESUtil.Decrypt(dataContent,AESUtil.transTo16(rules));
+        if(!abeUtil.checkIfHaveAttr(dataSample.getDecryptionRules(), userService.formatAttr(user.getAttributes()))){
+            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+        }
+        Optional<FileModel> fileModelOptional = fileService.getFileById(dataSample.getMongoId());
+        if(!fileModelOptional.isPresent()){
+            return new CommonResult<>(400, "mongoDB中文件不存在", null);
+        }
+        ByteArrayInputStream bis = new ByteArrayInputStream(fileModelOptional.get().getContent().getData());
+        String res = abeUtil.decrypt(bis, user.getUsername(), userService.formatAttr(user.getAttributes())).toString();
         //记录
         Record lastRecord = recordService.findRecentByDataId(id);
         String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
@@ -277,24 +282,25 @@ public class DataController {
         if (dataSample == null) {
             return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
         }
-        File old_file = new File(dataSample.getDataName());
-
+        if(!dataSample.getOriginUserId().equals(user.getId())){
+            return new CommonResult<>(400, "非文件拥有者，无权修改文件");
+        }
         // 2. 修改文件
         // 更新mongoDB
         FileModel fileModel = fileService.getFileById(dataSample.getMongoId()).orElseThrow(MongoDBException::new);
         String rules = dataSample.getDecryptionRules();
-        String encFile = AESUtil.Encrypt(dataContent,AESUtil.transTo16(rules));
-        fileModel.setContent(new Binary(encFile.getBytes()));
-        fileModel.setSize(encFile.getBytes().length);
+        byte[] encryptContent = abeUtil.encrypt(dataContent.getBytes(), rules).toByteArray();
+        fileModel.setContent(new Binary(encryptContent));
+        fileModel.setSize(encryptContent.length);
         try {
-            fileModel.setMd5(MD5Util.getMD5(new ByteArrayInputStream(encFile.getBytes())));
+            fileModel.setMd5(MD5Util.getMD5(new ByteArrayInputStream(encryptContent)));
         } catch (NoSuchAlgorithmException | IOException e) {
             log.error("获取文件md出错");
             e.printStackTrace();
         }
         fileService.saveFile(fileModel);
         //更新数据库
-        Double size = (double) (encFile.getBytes().length / 1024);
+        Double size = (double) (encryptContent.length / 1024);
         BigDecimal b = new BigDecimal(size);
         size = b.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         dataSample.setDataSize(size);

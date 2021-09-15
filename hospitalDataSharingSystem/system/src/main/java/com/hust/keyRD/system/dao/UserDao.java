@@ -11,6 +11,8 @@ import java.util.List;
 public interface UserDao {
     //返回所有用户
     List<User> getAllUser();
+    // 获得所有用户和管理员
+    List<User> getAllUserAndAdmin();
     //根据id查用户
     User findUserById(Integer id);
     //根据username查用户

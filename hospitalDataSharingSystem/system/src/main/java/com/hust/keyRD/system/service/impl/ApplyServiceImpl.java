@@ -91,6 +91,11 @@ public class ApplyServiceImpl implements ApplyService {
             return null;
         }
         String[] attributesList = myAttributes.split(SystemConstant.SPLIT_SYMBOL);
+        // 去除属性前后的空字符
+        for (int i = 0; i < attributesList.length; i++) {
+            String[] attrKv = attributesList[i].split(":");
+            attributesList[i] = attrKv[0].trim() + ":" + attrKv[1].trim();
+        }
         return new ArrayList<>(Arrays.asList(attributesList));
     }
 
@@ -125,6 +130,9 @@ public class ApplyServiceImpl implements ApplyService {
         String[] attrList = stringList.split(SystemConstant.SPLIT_SYMBOL);
         for (String s:attrList) {
             String[] kandv = s.split(":");
+            for (int i = 0; i < kandv.length; i++) {
+                kandv[i] = kandv[i].trim();
+            }
             if(!set.contains(kandv[0])){
                 AttributesVO attributesVO = new AttributesVO(kandv[0], new HashSet<>(Collections.singletonList(kandv[1])));
                 res.add(attributesVO);
@@ -139,4 +147,20 @@ public class ApplyServiceImpl implements ApplyService {
         }
         return res;
     }
+
+    @Override
+    public List<String> getAllAttributes() {
+        List<AttributesVO> attributesList = getAttributesList();
+        List<String> list = new ArrayList<>();
+        for (AttributesVO attributesVO : attributesList) {
+            String attrName = attributesVO.getKey();
+            for (String value : attributesVO.getValue()) {
+//                list.add(attrName + SystemConstant.ATTR_CONNECTOR + value);
+                list.add(value);
+            }
+        }
+        return list;
+    }
+
+
 }

@@ -45,6 +45,12 @@ public class MongoDbUtil {
         return fileModel;
     }
 
+    public FileModel uploadAndCache(byte[] bytes, String fileName)  {
+        FileModel fileModel = upload(bytes, fileName);
+        fileCache.put(fileName, fileModel);
+        return fileModel;
+    }
+
     public FileModel upload(byte[] bytes, String fileName)  {
         FileModel fileModel = new FileModel(fileName, null, bytes.length, new Binary(bytes));
         fileModel.setUploadDate(new Date());
@@ -54,7 +60,6 @@ public class MongoDbUtil {
             log.warn("FileModel set md5 error! ");
         }
         fileService.saveFile(fileModel);
-        fileCache.put(fileName, fileModel);
         return fileModel;
     }
 }

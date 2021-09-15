@@ -14,8 +14,10 @@ import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
 import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.UserService;
+import com.hust.keyRD.system.utils.AbeUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -35,6 +37,8 @@ public class ApplyController {
     private UserService userService;
     @Resource
     private FabricService fabricService;
+    @Resource
+    private AbeUtil abeUtil;
 
     //请求获取属性
     @CheckToken
@@ -93,12 +97,16 @@ public class ApplyController {
             User applier = userService.findUserById(hasDownApply.getApplierId());
             User targetUser = userService.findUserById(hasDownApply.getTargetUserId());
             log.info("************fabric申请权限开始*****************");
-            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
+//            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
             log.info("************fabric申请权限结束*****************");
             //不包含属性时才进行添加
-            if(!applier.getAttributes().contains(attribute)) {
+            if(StringUtils.isEmpty(applier.getAttributes()) || !applier.getAttributes().contains(attribute)) {
                 String newAttr = applier.getAttributes() == null ? attribute : applier.getAttributes() + SystemConstant.SPLIT_SYMBOL + attribute;
                 applier.setAttributes(newAttr);
+                // 授权属性
+                String[] applyAttrs = new String[1];
+                applyAttrs[0] = attribute.split(":")[1].trim();
+                abeUtil.grantAttrToUser(applyAttrs, applier.getUsername());
                 userService.updateAttributes(applier);
             }
         }

@@ -92,19 +92,19 @@ public class UserController {
         if (userService.findUserByUsername(user.getUsername()) != null) {
             return new CommonResult<>(400, "注册失败,用户名已存在", null);
         }
-        if (user.getIsAdmin() == null || user.getIsAdmin() == 0) {
-            user.setAttributes("position:student");
-        } else {
-            user.setAttributes("position:teacher");
-        }
+//        if (user.getIsAdmin() == null || user.getIsAdmin() == 0) {
+//            user.setAttributes("position:student");
+//        } else {
+//            user.setAttributes("position:teacher");
+//        }
         user.setFabricUserId(user.getUsername());
 //        userService.
 //        boolean result = userService.register(user);
         userDao.register(user);
-        if (!fabricService.addUser(user.getUsername(), Attribute.getAttrs(user.getAttributes()))) {
-            log.warn("fabric error：注册用户失败");
-            return new CommonResult<>(400, "注册失败,请联系系统管理员", null);
-        }
+//        if (!fabricService.addUser(user.getUsername(), Attribute.getAttrs(user.getAttributes()))) {
+//            log.warn("fabric error：注册用户失败");
+//            return new CommonResult<>(400, "注册失败,请联系系统管理员", null);
+//        }
         if (user.getChannelId() == null) {
             return new CommonResult<>(400, "注册失败,请选择一个合适的通道", null);
         }

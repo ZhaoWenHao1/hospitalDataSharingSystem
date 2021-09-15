@@ -1,6 +1,7 @@
 package AbeTest;
 
 import com.hust.keyRD.system.file.model.FileModel;
+import com.hust.keyRD.system.init.SystemInit;
 import com.hust.keyRD.system.utils.AbeUtil;
 import com.hust.keyRD.system.utils.MongoDbUtil;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -38,6 +39,15 @@ public class AbeUtilTest {
 
     @Autowired
     public MongoDbUtil mongoDbUtil;
+
+    @Autowired
+    public SystemInit systemInit;
+
+    @Test
+    public void systemInit() throws IOException {
+        systemInit.abeInit();
+//        systemInit.grantAttrToUser();
+    }
 
 
     @Test
@@ -119,5 +129,7 @@ public class AbeUtilTest {
         System.out.println(abeUtil.checkIfHaveAttr(policy, attrs1));
         System.out.println(abeUtil.checkIfHaveAttr(policy, attrs2));
     }
+
+
 
 }

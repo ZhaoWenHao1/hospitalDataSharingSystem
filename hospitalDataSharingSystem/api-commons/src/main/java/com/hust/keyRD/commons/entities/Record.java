@@ -1,5 +1,6 @@
 package com.hust.keyRD.commons.entities;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -71,6 +72,7 @@ public class Record {
     /**
      * 创建时间
      */
+//    @JsonFormat(timezone = "GMT+08:00");
     private Timestamp createdTime;
 
 }

@@ -1,6 +1,7 @@
 package com.hust.keyRD.system.utils;
 
 import com.hust.keyRD.system.file.model.FileModel;
+import com.hust.keyRD.system.service.ApplyService;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.crypto.DataLengthException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
@@ -8,6 +9,7 @@ import org.bouncycastle.crypto.paddings.PaddedBufferedBlockCipher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.ResourceUtils;
+import sg.edu.ntu.sce.sands.crypto.DCPABETool;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.*;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.ac.AccessStructure;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.key.PersonalKey;
@@ -15,6 +17,7 @@ import sg.edu.ntu.sce.sands.crypto.dcpabe.key.PublicKey;
 import sg.edu.ntu.sce.sands.crypto.dcpabe.key.SecretKey;
 import sg.edu.ntu.sce.sands.crypto.utility.Utility;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Map;
@@ -34,27 +37,23 @@ public class AbeUtil {
     @Autowired
     public MongoDbUtil mongoDbUtil;
 
+    @Autowired
+    public ApplyService applyService;
+
     private final String gpName = "dcpabe.gp";
     private final String akSecKeyName = "akSecKey";
     private final String akPubKeyName = "akPubKey";
 
-    //    @Value("${dcpabe.filePath}")
-//    @Value("classpath:/abe/")
-    public static String rootPath;
-
     public static volatile GlobalParameters gp;
-    //    private static volatile PublicKeys publicKeys;
     private static volatile Map<String, PublicKey> publicKeys;
     private static volatile Map<String, SecretKey> secretKeys;
 
-//    private static String gpPath;
-//    private static String akSecKeyPath;
-//    private static String akPubKeyPath;
 
-    //    @PostConstruct
+    @PostConstruct
     public void init() throws IOException, ClassNotFoundException {
-        rootPath = AbeUtil.getRootPath();
         initGp();
+        initPublicKeys();
+        initPublicKeys();
     }
 
 
@@ -109,7 +108,7 @@ public class AbeUtil {
 
         oos.writeObject(ct);
         PaddedBufferedBlockCipher aes = Utility.initializeAES(m.getM(), true);
-        encryptOrDecryptPayload(aes, bis, oos);
+        DCPABETool.encryptOrDecryptPayload(aes, bis, oos);
         oos.flush();
         return bos;
     }
@@ -135,29 +134,15 @@ public class AbeUtil {
         }
     }
 
-    public Message decrypt(Ciphertext ct, String username, String[] attrs) {
-        if (gp == null) {
-            initGp();
-        }
-
-        PersonalKeys personalKeys = new PersonalKeys(username);
-        for (String attr : attrs) {
-            String fileName = generateNameByUserAndAttr(username, attr);
-            FileModel fileModel = mongoDbUtil.getByName(fileName);
-            if (fileModel != null) {
-                PersonalKey pk = (PersonalKey) SerializeUtil.unserialize(fileModel.getContent().getData());
-                personalKeys.addKey(pk);
-            } else {
-                log.warn(String.format("decrypt error: attr[{}] did not be granted", attr));
-                throw new RuntimeException(String.format("decrypt error: attr[{}] did not be granted", attr));
-            }
-        }
-
-        Message message = DCPABE.decrypt(ct, personalKeys, gp);
-        return message;
-
-    }
-
+    /**
+     * 文件解密
+     * @param bis
+     * @param username
+     * @param attrs
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public ByteArrayOutputStream decrypt(ByteArrayInputStream bis, String username, String[] attrs) throws IOException, ClassNotFoundException {
         if (gp == null) {
             initGp();
@@ -181,7 +166,7 @@ public class AbeUtil {
         PaddedBufferedBlockCipher aes = Utility.initializeAES(message.getM(), false);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         try (BufferedOutputStream bos = new BufferedOutputStream(byteArrayOutputStream)) {
-            encryptOrDecryptPayload(aes, oIn, bos);
+            DCPABETool.encryptOrDecryptPayload(aes, oIn, bos);
             bos.flush();
         } catch (InvalidCipherTextException e) {
             e.printStackTrace();
@@ -201,14 +186,6 @@ public class AbeUtil {
         return accessStructure.getIndexesList(Arrays.stream(attrs).collect(Collectors.toList())) != null;
     }
 
-
-    public static String getRootPath() {
-        try {
-            return ResourceUtils.getURL("classpath:").getPath();
-        } catch (FileNotFoundException e) {
-            return "";
-        }
-    }
 
     /**
      * 初始化全局gp  如果mongoDb中有，则反序列化，否则生成并上传到mongoDB
@@ -230,7 +207,6 @@ public class AbeUtil {
                     } catch (Exception e) {
                         log.warn("gp init error: " + e.getMessage());
                     }
-
                 }
             }
         }
@@ -268,17 +244,6 @@ public class AbeUtil {
         }
     }
 
-    private static void encryptOrDecryptPayload(PaddedBufferedBlockCipher cipher, InputStream is, OutputStream os) throws DataLengthException, IllegalStateException, InvalidCipherTextException, IOException {
-        byte[] inBuff = new byte[cipher.getBlockSize()];
-        byte[] outBuff = new byte[cipher.getOutputSize(inBuff.length)];
-        int nbytes;
-        while (-1 != (nbytes = is.read(inBuff, 0, inBuff.length))) {
-            int length1 = cipher.processBytes(inBuff, 0, nbytes, outBuff, 0);
-            os.write(outBuff, 0, length1);
-        }
-        nbytes = cipher.doFinal(outBuff, 0);
-        os.write(outBuff, 0, nbytes);
-    }
 
 
     public static String generateNameByUserAndAttr(String username, String[] attrs) {

@@ -8,6 +8,8 @@ spring:
     name: fabric-system
   banner:
     location: banner.txt
+  jackson:
+    time-zone: Asia/Shanghai
   #    image:
   #      location: logo.png
   #rabbitmq配置信息
@@ -76,6 +78,3 @@ logging:
       spring:
         jiminshiro:
           mapper: debug
-
-dcpabe:
-  filePath: classpath:abe/

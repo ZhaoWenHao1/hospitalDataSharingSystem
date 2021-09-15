@@ -2,6 +2,7 @@ package com.hust.keyRD.commons.Dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.util.StringUtils;
 
 /**
  * @program: hospitalDataSharingSystem
@@ -32,6 +33,9 @@ public class Attribute {
      * @return
      */
     public static String getAttrs(String attrStr) {
+        if(StringUtils.isEmpty(attrStr)){
+            return "";
+        }
         StringBuilder sb = new StringBuilder();
         String[] strings = attrStr.split(",");
         for (int i = 0; i < strings.length; i++) {
