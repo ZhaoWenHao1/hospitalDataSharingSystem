@@ -98,19 +98,11 @@ public class DataController {
             dataSample.setFrom(-1);
             System.out.println(dataSample);
             dataService.uploadFile(dataSample);
-            String lastTx = "0", thisTx = recordService.generateTxId(dataSample.getId());
-            //记录
-            Record record = new Record();
+
+            // 记录
             String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
-            record.setHashData(dataSample.hashCode() + "");
-            record.setSrcChain(channelName);
-            record.setDstChain(channelName);
-            record.setUser(user.getUsername());
-            record.setDataId(dataSample.getId());
-            record.setTypeTx("add");
-            record.setThisTxId(thisTx);
-            record.setLastTxId(lastTx);
-            recordService.addRecord(record);
+            recordService.record(channelName, user.getUsername(), dataSample, "add");
+
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
 //            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
@@ -192,20 +184,22 @@ public class DataController {
 //            log.info("************fabric上传文件操作记录区块链开始*****************");
 //            log.info("************fabric上传文件操作记录区块链结束*****************");
             //记录
-            Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
-            String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
-            String  thisTx = recordService.generateTxId(newDataSample.getId());
-            Record record = new Record();
             String channelName = channelService.findChannelById(newDataSample.getChannelId()).getChannelName();
-            record.setHashData(newDataSample.hashCode() + "");
-            record.setSrcChain(channelName);
-            record.setDstChain(channelName);
-            record.setUser(user.getUsername());
-            record.setDataId(newDataSample.getId());
-            record.setTypeTx("add");
-            record.setThisTxId(thisTx);
-            record.setLastTxId(lastTx);
-            recordService.addRecord(record);
+            recordService.record(channelName, user.getUsername(), dataSample, "add");
+
+//            Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
+//            String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+//            String  thisTx = recordService.generateTxId(newDataSample.getId());
+//            Record record = new Record();
+//            record.setHashData(newDataSample.hashCode() + "");
+//            record.setSrcChain(channelName);
+//            record.setDstChain(channelName);
+//            record.setUser(user.getUsername());
+//            record.setDataId(newDataSample.getId());
+//            record.setTypeTx("add");
+//            record.setThisTxId(thisTx);
+//            record.setLastTxId(lastTx);
+//            recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             log.info("************fabric上传文件操作记录区块链结束*****************");
         } catch (Exception e) {
@@ -247,20 +241,22 @@ public class DataController {
         ByteArrayInputStream bis = new ByteArrayInputStream(fileModelOptional.get().getContent().getData());
         String res = abeUtil.decrypt(bis, user.getUsername(), userService.formatAttr(user.getAttributes())).toString();
         //记录
-        Record lastRecord = recordService.findRecentByDataId(id);
-        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
-        String  thisTx = recordService.generateTxId(id);
-        Record record = new Record();
         String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
-        record.setHashData(dataSample.hashCode() + "");
-        record.setSrcChain(channelName);
-        record.setDstChain(channelName);
-        record.setUser(user.getUsername());
-        record.setDataId(dataSample.getId());
-        record.setTypeTx("read");
-        record.setThisTxId(thisTx);
-        record.setLastTxId(lastTx);
-        recordService.addRecord(record);
+        recordService.record(channelName, user.getUsername(), dataSample, "read");
+
+//        Record lastRecord = recordService.findRecentByDataId(id);
+//        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+//        String  thisTx = recordService.generateTxId(id);
+//        Record record = new Record();
+//        record.setHashData(dataSample.hashCode() + "");
+//        record.setSrcChain(channelName);
+//        record.setDstChain(channelName);
+//        record.setUser(user.getUsername());
+//        record.setDataId(dataSample.getId());
+//        record.setTypeTx("read");
+//        record.setThisTxId(thisTx);
+//        record.setLastTxId(lastTx);
+//        recordService.addRecord(record);
         return new CommonResult<>(200, "success", res);
     }
 
@@ -307,20 +303,21 @@ public class DataController {
         dataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
         dataService.updateFile(dataSample);
         //记录
-        Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
-        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
-        String  thisTx = recordService.generateTxId(dataSample.getId());
-        Record record = new Record();
         String channelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
-        record.setHashData(dataSample.hashCode() + "");
-        record.setSrcChain(channelName);
-        record.setDstChain(channelName);
-        record.setUser(user.getUsername());
-        record.setDataId(dataSample.getId());
-        record.setTypeTx("modify");
-        record.setThisTxId(thisTx);
-        record.setLastTxId(lastTx);
-        recordService.addRecord(record);
+        recordService.record(channelName, user.getUsername(), dataSample, "modify");
+//        Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
+//        String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();
+//        String  thisTx = recordService.generateTxId(dataSample.getId());
+//        Record record = new Record();
+//        record.setHashData(dataSample.hashCode() + "");
+//        record.setSrcChain(channelName);
+//        record.setDstChain(channelName);
+//        record.setUser(user.getUsername());
+//        record.setDataId(dataSample.getId());
+//        record.setTypeTx("modify");
+//        record.setThisTxId(thisTx);
+//        record.setLastTxId(lastTx);
+//        recordService.addRecord(record);
         // 3. 更新hash值到fabric 二次上链
 
         log.info("************fabric更新文件操作记录区块链结束*****************");

@@ -1,5 +1,6 @@
 package com.hust.keyRD.system.service;
 
+import com.hust.keyRD.commons.entities.DataSample;
 import com.hust.keyRD.commons.entities.Record;
 
 /**
@@ -16,4 +17,7 @@ public interface RecordService {
     Record findRecentByDataId(Integer dataId);
 
     String generateTxId(Integer dataId);
+
+    boolean record(String srcChain, String username, DataSample data, String typeTx);
+
 }
