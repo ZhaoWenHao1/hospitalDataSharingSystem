@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-@Service
+@Service("fabricServiceImpl1")
 public class FabricServiceImpl implements FabricService {
 
     @Autowired
