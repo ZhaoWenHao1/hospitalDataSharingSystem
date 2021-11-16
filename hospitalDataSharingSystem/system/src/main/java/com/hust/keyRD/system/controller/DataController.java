@@ -1,8 +1,6 @@
 package com.hust.keyRD.system.controller;
 
 import com.auth0.jwt.JWT;
-import com.hust.keyRD.commons.Dto.ShareResult;
-import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.*;
 import com.hust.keyRD.commons.exception.mongoDB.MongoDBException;
 import com.hust.keyRD.commons.myAnnotation.CheckToken;
@@ -11,6 +9,7 @@ import com.hust.keyRD.commons.utils.MD5Util;
 import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
+import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
 import com.hust.keyRD.system.service.ChannelService;
@@ -49,6 +48,8 @@ public class DataController {
     @Resource
     private ChannelService channelService;
     @Resource
+    private FabricService fabricService;
+    @Resource
     private RecordService recordService;
 
     //上传文件
@@ -70,7 +71,8 @@ public class DataController {
             // 文件保存到mongoDB
             FileModel f = new FileModel(file.getOriginalFilename(), file.getContentType(), encFile.length(),
                     new Binary(encFile.getBytes()));
-            f.setMd5(MD5Util.getMD5(file.getInputStream()));
+            String md5 = MD5Util.getMD5(file.getInputStream());
+            f.setMd5(md5);
             fileService.saveFile(f);
 
             DataSample dataSample = new DataSample();
@@ -109,7 +111,8 @@ public class DataController {
             recordService.addRecord(record);
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
-         log.info("************fabric上传文件操作记录区块链结束*****************");
+//            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
+            log.info("************fabric上传文件加密策略结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
             return new CommonResult<>(400, e.getMessage(), null);
@@ -135,7 +138,6 @@ public class DataController {
     @CheckToken
     @PostMapping(value = "/data/decData")
     @ResponseBody
-    @Transactional(rollbackFor = Exception.class)
     public CommonResult decData(@RequestBody Map<String, String> params, HttpServletRequest httpServletRequest){
         Integer dataId = Integer.valueOf(params.get("dataId"));
         DataSample dataSample = dataService.findDataById(dataId);
@@ -145,13 +147,20 @@ public class DataController {
         Integer originUserId = JWT.decode(token).getClaim("id").asInt();
         User user = userService.findUserById(originUserId);
         String attributes = user.getAttributes();
-        //模拟检查属性是否满足
-        if(new Random().nextFloat()>0.5){
-            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
-        }
         if (result == null) {
             return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
         }
+        log.info("************fabric申请文件解密开始*****************");
+//        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
+        log.info("************fabric申请文件解结束*****************");
+        //模拟检查属性是否满足
+        if (!dataService.checkDecAttr(dataSample.getDecryptionRules(), user.getAttributes())) {
+            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+        }
+//        if(StringUtils.isEmpty(txId)){
+//            return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
+//        }
+
         // 2. 读取文件
         String fileContent = new String(Objects.requireNonNull(fileService.getFileById(dataSample.getMongoId())
                 .map(FileModel::getContent)
@@ -176,7 +185,10 @@ public class DataController {
             newDataSample.setModifiedTime(new Timestamp(System.currentTimeMillis()));
             newDataSample.setDecryptionRules(dataSample.getDecryptionRules());
             newDataSample.setFrom(dataSample.getId());
+//            newDataSample.setDecryptTxId(txId);
             dataService.uploadFile(newDataSample);
+//            log.info("************fabric上传文件操作记录区块链开始*****************");
+//            log.info("************fabric上传文件操作记录区块链结束*****************");
             //记录
             Record lastRecord = recordService.findRecentByDataId(dataSample.getId());
             String lastTx = lastRecord == null ? "0" : lastRecord.getThisTxId();

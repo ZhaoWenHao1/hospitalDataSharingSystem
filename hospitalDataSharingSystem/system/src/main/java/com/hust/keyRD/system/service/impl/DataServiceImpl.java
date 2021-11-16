@@ -7,6 +7,9 @@ import com.hust.keyRD.system.dao.DataDao;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
 import com.hust.keyRD.system.service.UserService;
+import org.springframework.expression.Expression;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -92,5 +95,40 @@ public class DataServiceImpl implements DataService
         List<DataSample> dataList = dataDao.getDataListExceptMe(originUserId);
         Map<Integer, List<DataSample>> collect = dataList.stream().collect(Collectors.groupingBy(DataSample::getChannelId));
         return collect;
+    }
+
+
+    /**
+     * 检查用户是否有解密属性
+     *
+     * @param policy   文件加密策略 例如：teacher and (chemistry or computer)
+     * @param userAttr 用户属性 例如：position:teacher,academy:agriculture
+     * @return
+     */
+    @Override
+    public boolean checkDecAttr(String policy, String userAttr) {
+        policy = policy.replaceAll("and", " && ");
+        policy = policy.replaceAll("or", " || ");
+        policy = policy.replaceAll("\\(", " ( ");
+        policy = policy.replaceAll("\\)", " ) ");
+        String[] strings = policy.split("\\s");
+        StringBuilder sb = new StringBuilder();
+        for (String str : strings) {
+            if (str.length() == 0) {
+                continue;
+            }
+            if (str.equals("&&") || str.equals("||") || str.equals("(") || str.equals(")")) {
+                sb.append(str);
+            } else {
+                if (userAttr.contains(str)) {
+                    sb.append("true");
+                } else {
+                    sb.append("false");
+                }
+            }
+        }
+        ExpressionParser ep = new SpelExpressionParser();
+        Expression exp = ep.parseExpression(sb.toString());
+        return exp.getValue(Boolean.class);
     }
 }

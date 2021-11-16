@@ -23,4 +23,5 @@ public class DataSample implements Serializable {
     private Integer sharedCount;
     private String decryptionRules;
     private Integer from;
+    private String decryptTxId;
 }

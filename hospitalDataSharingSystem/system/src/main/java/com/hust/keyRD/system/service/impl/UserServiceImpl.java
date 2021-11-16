@@ -1,10 +1,9 @@
 package com.hust.keyRD.system.service.impl;
 
 import com.hust.keyRD.commons.entities.Channel;
+import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.system.dao.ChannelDao;
 import com.hust.keyRD.system.dao.UserDao;
-import com.hust.keyRD.commons.entities.User;
-import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.UserService;
 import org.springframework.stereotype.Service;
 
@@ -52,13 +51,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean register(User user) {
-        try{
-            userDao.register(user);
-            return true;
-        }catch (Exception e){
-            return false;
-        }
+    public void register(User user) {
+        userDao.register(user);
     }
 
     @Override

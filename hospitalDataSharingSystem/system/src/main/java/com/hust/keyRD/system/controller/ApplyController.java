@@ -1,8 +1,8 @@
 package com.hust.keyRD.system.controller;
 
 
-import com.alibaba.fastjson.JSON;
 import com.auth0.jwt.JWT;
+import com.hust.keyRD.commons.Dto.Attribute;
 import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Apply;
 import com.hust.keyRD.commons.entities.CommonResult;
@@ -11,11 +11,15 @@ import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.vo.ApplyVO;
 import com.hust.keyRD.commons.vo.AttributesVO;
 import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
+import com.hust.keyRD.system.api.service.FabricService;
 import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.UserService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -26,9 +30,11 @@ import java.util.List;
 @RestController
 public class ApplyController {
     @Resource
-    ApplyService applyService;
+    private ApplyService applyService;
     @Resource
-    UserService userService;
+    private UserService userService;
+    @Resource
+    private FabricService fabricService;
 
     //请求获取属性
     @CheckToken
@@ -84,12 +90,16 @@ public class ApplyController {
         //同意授予权限，增加权限
         if(applyVO.getResult()==1){
             String attribute = hasDownApply.getAttributes();
-            User user = userService.findUserById(hasDownApply.getApplierId());
+            User applier = userService.findUserById(hasDownApply.getApplierId());
+            User targetUser = userService.findUserById(hasDownApply.getTargetUserId());
+            log.info("************fabric申请权限开始*****************");
+            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
+            log.info("************fabric申请权限结束*****************");
             //不包含属性时才进行添加
-            if(!user.getAttributes().contains(attribute)) {
-                String newAttr = user.getAttributes() == null ? attribute : user.getAttributes() + SystemConstant.SPLIT_SYMBOL + attribute;
-                user.setAttributes(newAttr);
-                userService.updateAttributes(user);
+            if(!applier.getAttributes().contains(attribute)) {
+                String newAttr = applier.getAttributes() == null ? attribute : applier.getAttributes() + SystemConstant.SPLIT_SYMBOL + attribute;
+                applier.setAttributes(newAttr);
+                userService.updateAttributes(applier);
             }
         }
         return new CommonResult<>(200, "审批成功",hasDownApply);

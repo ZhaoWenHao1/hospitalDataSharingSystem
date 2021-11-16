@@ -2,6 +2,7 @@ package com.hust.keyRD.system.service;
 
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.User;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,11 +16,12 @@ public interface UserService {
     
     // 获取channels中的用户
     List<User> findUserByChannel(List<Integer> channels);
-    
+
     //用户登录
     boolean login(User user);
+
     //用户注册
-    boolean register(User user);
+    void register(User user);
 
     /**
      * 获取所有用户 按照channel分类
