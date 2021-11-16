@@ -2,12 +2,16 @@ package com.hust.keyRD.system.controller;
 
 import cn.hutool.json.JSONObject;
 import com.auth0.jwt.JWT;
+import com.google.common.base.Joiner;
+import com.hust.keyRD.commons.constant.SystemConstant;
 import com.hust.keyRD.commons.entities.Channel;
 import com.hust.keyRD.commons.entities.CommonResult;
 import com.hust.keyRD.commons.entities.User;
 import com.hust.keyRD.commons.myAnnotation.LoginToken;
 import com.hust.keyRD.commons.utils.JwtUtil;
+import com.hust.keyRD.commons.utils.MergeAttrs;
 import com.hust.keyRD.commons.vo.ApplyVO;
+import com.hust.keyRD.commons.vo.AttributesVO;
 import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.DataService;
@@ -21,8 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -120,9 +123,10 @@ public class UserController{
         // 从 http 请求头中取出 token
         String token = httpServletRequest.getHeader("token");
         Integer userId = JWT.decode(token).getClaim("id").asInt();
-        List<String> result;
+        List<String> result = new ArrayList<>();
         try {
-            result = applyService.getUserAttributes(userId);
+            List<String> origin = applyService.getUserAttributes(userId);
+            result = MergeAttrs.mergeAttrs(origin);
         }catch (Exception e){
             return new CommonResult<>(400, "个人属性异常，请联系系统管理员");
         }
