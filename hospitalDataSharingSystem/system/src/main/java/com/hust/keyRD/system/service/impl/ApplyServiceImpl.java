@@ -124,7 +124,14 @@ public class ApplyServiceImpl implements ApplyService {
 
     @Override
     public List<AttributesVO> getAttributesList() {
-        String stringList = Joiner.on(SystemConstant.SPLIT_SYMBOL).join(applyDao.getAllAttributes());
+        List<String> attrs = applyDao.getAllAttributes();
+        for (int i = 0; i < attrs.size(); i++) {
+            if(attrs.get(i)==null){
+                attrs.remove(i);
+                i--;
+            }
+        }
+        String stringList = Joiner.on(SystemConstant.SPLIT_SYMBOL).join(attrs);
         Set<String> set = new HashSet<>();
         List<AttributesVO> res = new ArrayList<>();
         String[] attrList = stringList.split(SystemConstant.SPLIT_SYMBOL);
