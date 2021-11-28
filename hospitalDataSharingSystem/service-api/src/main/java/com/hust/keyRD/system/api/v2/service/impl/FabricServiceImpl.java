@@ -23,7 +23,7 @@ public class FabricServiceImpl implements FabricService {
 
 
     @Override
-    public void addDataAndPolicy(String requester, String channelName, String hashData, String dataId, String policy) {
+    public void addDataAndPolicy(String channelName, String hashData, String dataId, String policy) {
         List<String> args = new ArrayList<String>() {{
             add(hashData);
             add(dataId);
@@ -32,12 +32,13 @@ public class FabricServiceImpl implements FabricService {
             add(policy);
         }};
 
-        feignService.attrPolicy(requester, channelName, getPeers(requester), "attrpolicy", "channel", args);
+        feignService.attrPolicy(channelName, args);
+//        feignService.attrPolicy(requester, channelName, getPeers(requester), "attrpolicy", "channel", args);
 
     }
 
     @Override
-    public void addUser(String requester, String channelName, String certificate, String userId, String attrSet) {
+    public void addUser(String channelName, String certificate, String userId, String attrSet) {
         List<String> args = new ArrayList<String>() {{
             add(certificate);
             add(userId);
@@ -46,11 +47,12 @@ public class FabricServiceImpl implements FabricService {
             add(attrSet);
         }};
 
-        feignService.attrUser(requester, channelName, getPeers(requester), "attruser", "channel", args);
+        feignService.attrUser( channelName, args);
+//        feignService.attrUser(requester, channelName, getPeers(requester), "attruser", "channel", args);
     }
 
     @Override
-    public void addAttr(String requester, String channelName, String fromUser, String toUser, String attr, String result) {
+    public void addAttr(String channelName, String fromUser, String toUser, String attr, String result) {
         List<String> args = new ArrayList<String>() {{
             add(fromUser);
             add(toUser);
@@ -59,11 +61,12 @@ public class FabricServiceImpl implements FabricService {
             add(result);
         }};
 
-        feignService.addAttr(requester, channelName, getPeers(requester), "addattr", "channel", args);
+        feignService.addAttr(channelName, args);
+//        feignService.addAttr(requester, channelName, getPeers(requester), "addattr", "channel", args);
     }
 
     @Override
-    public void dataShare(String requester, String srcChannelName, String targetChannelName, String hashData, String userId, String dataId, String result) {
+    public void dataShare(String srcChannelName, String targetChannelName, String hashData, String userId, String dataId, String result) {
         List<String> args = new ArrayList<String>() {{
             add(hashData);
             add(srcChannelName);
@@ -74,7 +77,8 @@ public class FabricServiceImpl implements FabricService {
             add(result);
         }};
 
-        feignService.judgement(requester, targetChannelName, getPeers(requester), "judgement", "channel", args);
+        feignService.judgement(targetChannelName, args);
+//        feignService.judgement(requester, targetChannelName, getPeers(requester), "judgement", "channel", args);
     }
 
 
