@@ -2,6 +2,8 @@ package com.hust.keyRD.system.api.v2.service.impl;
 
 import com.hust.keyRD.system.api.v2.feign.FeignService;
 import com.hust.keyRD.system.api.v2.service.FabricService;
+import feign.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +17,7 @@ import java.util.List;
  * @author: zwh
  * @create: 2021/9/28 10:26
  **/
+@Slf4j
 @Service
 public class FabricServiceImpl implements FabricService {
 
@@ -32,7 +35,8 @@ public class FabricServiceImpl implements FabricService {
             add(policy);
         }};
 
-        feignService.attrPolicy(channelName, args);
+        Response response = feignService.attrPolicy(channelName, args);
+        log.info(response.body().toString());
 //        feignService.attrPolicy(requester, channelName, getPeers(requester), "attrpolicy", "channel", args);
 
     }
@@ -47,7 +51,8 @@ public class FabricServiceImpl implements FabricService {
             add(attrSet);
         }};
 
-        feignService.attrUser( channelName, args);
+        Response response = feignService.attrUser(channelName, args);
+        log.info(response.body().toString());
 //        feignService.attrUser(requester, channelName, getPeers(requester), "attruser", "channel", args);
     }
 
@@ -61,7 +66,8 @@ public class FabricServiceImpl implements FabricService {
             add(result);
         }};
 
-        feignService.addAttr(channelName, args);
+        Response response = feignService.addAttr(channelName, args);
+        log.info(response.body().toString());
 //        feignService.addAttr(requester, channelName, getPeers(requester), "addattr", "channel", args);
     }
 
@@ -77,7 +83,8 @@ public class FabricServiceImpl implements FabricService {
             add(result);
         }};
 
-        feignService.judgement(targetChannelName, args);
+        Response response = feignService.judgement(targetChannelName, args);
+        log.info(response.body().toString());
 //        feignService.judgement(requester, targetChannelName, getPeers(requester), "judgement", "channel", args);
     }
 

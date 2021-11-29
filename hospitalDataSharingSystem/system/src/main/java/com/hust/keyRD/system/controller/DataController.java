@@ -9,7 +9,7 @@ import com.hust.keyRD.commons.utils.MD5Util;
 import com.hust.keyRD.commons.vo.DataSampleVO;
 import com.hust.keyRD.commons.vo.UploadResult;
 import com.hust.keyRD.commons.vo.mapper.DataSampleVOMapper;
-import com.hust.keyRD.system.api.service.FabricService;
+import com.hust.keyRD.system.api.v2.service.FabricService;
 import com.hust.keyRD.system.file.model.FileModel;
 import com.hust.keyRD.system.file.service.FileService;
 import com.hust.keyRD.system.service.ChannelService;
@@ -106,9 +106,12 @@ public class DataController {
             log.info("************fabric上传文件操作记录区块链开始*****************");
             UploadResult result = new UploadResult();
 //            fabricService.addEncryptionPolicy(String.valueOf(dataSample.getId()), md5, rules, "channel1");
+            String hash = MD5Util.getMD5(file.getInputStream());
+            fabricService.addDataAndPolicy(channelName,hash,dataSample.getId().toString(), rules);
             log.info("************fabric上传文件加密策略结束*****************");
             return new CommonResult<>(200, "文件上传成功", result);
         } catch (Exception e) {
+            e.printStackTrace();
             return new CommonResult<>(400, e.getMessage(), null);
         }
     }
@@ -144,9 +147,9 @@ public class DataController {
         if (result == null) {
             return new CommonResult<>(400, "不存在id为：" + dataId + "的文件", null);
         }
-        log.info("************fabric申请文件解密开始*****************");
-//        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
-        log.info("************fabric申请文件解结束*****************");
+//        log.info("************fabric申请文件解密开始*****************");
+////        String txId = fabricService.crossChannelJudgement(user.getUsername(),String.valueOf(dataId), "hashData");
+//        log.info("************fabric申请文件解结束*****************");
         //模拟检查属性是否满足
         if(!abeUtil.checkIfHaveAttr(dataSample.getDecryptionRules(), userService.formatAttr(user.getAttributes()))){
             return new CommonResult<>(400, "属性不满足获取文件的权限，请申请属性", null);
@@ -172,7 +175,7 @@ public class DataController {
             newDataSample.setDataSize(dataSample.getDataSize());
             newDataSample.setMongoId(f.getId());
             newDataSample.setOriginUserId(originUserId);
-            newDataSample.setChannelId(dataSample.getChannelId());
+            newDataSample.setChannelId(user.getChannelId());
             newDataSample.setDataType(dataSample.getDataType());
             //初次创建时将初始时间和修改时间写成一样
             newDataSample.setCreatedTime(new Timestamp(System.currentTimeMillis()));
@@ -200,9 +203,13 @@ public class DataController {
 //            record.setThisTxId(thisTx);
 //            record.setLastTxId(lastTx);
 //            recordService.addRecord(record);
+            String srcChannelName = channelService.findChannelById(dataSample.getChannelId()).getChannelName();
+            String targetChannelName = channelName;
             log.info("************fabric上传文件操作记录区块链开始*****************");
+            fabricService.dataShare(srcChannelName, targetChannelName, fileModel.getMd5(), user.getId().toString(), dataSample.getId().toString(), "success");
             log.info("************fabric上传文件操作记录区块链结束*****************");
         } catch (Exception e) {
+            e.printStackTrace();
             return new CommonResult<>(400, e.getMessage(), null);
         }
         return new CommonResult<>(200, "文件解密成功", new String(fileModel.getContent().getData()));

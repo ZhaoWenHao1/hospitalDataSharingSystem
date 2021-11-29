@@ -11,8 +11,9 @@ import com.hust.keyRD.commons.myAnnotation.CheckToken;
 import com.hust.keyRD.commons.vo.ApplyVO;
 import com.hust.keyRD.commons.vo.AttributesVO;
 import com.hust.keyRD.commons.vo.mapper.ApplyVOMapper;
-import com.hust.keyRD.system.api.service.FabricService;
+import com.hust.keyRD.system.api.v2.service.FabricService;
 import com.hust.keyRD.system.service.ApplyService;
+import com.hust.keyRD.system.service.ChannelService;
 import com.hust.keyRD.system.service.UserService;
 import com.hust.keyRD.system.utils.AbeUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -35,6 +37,8 @@ public class ApplyController {
     private ApplyService applyService;
     @Resource
     private UserService userService;
+    @Resource
+    private ChannelService channelService;
     @Resource
     private FabricService fabricService;
     @Resource
@@ -96,18 +100,22 @@ public class ApplyController {
             String attribute = hasDownApply.getAttributes();
             User applier = userService.findUserById(hasDownApply.getApplierId());
             User targetUser = userService.findUserById(hasDownApply.getTargetUserId());
-            log.info("************fabric申请权限开始*****************");
-//            fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
-            log.info("************fabric申请权限结束*****************");
+            String applierChannelName = channelService.findChannelById(applier.getChannelId()).getChannelName();
+
             //不包含属性时才进行添加
             if(StringUtils.isEmpty(applier.getAttributes()) || !applier.getAttributes().contains(attribute)) {
                 String newAttr = applier.getAttributes() == null ? attribute : applier.getAttributes() + SystemConstant.SPLIT_SYMBOL + attribute;
                 applier.setAttributes(newAttr);
                 // 授权属性
                 String[] applyAttrs = new String[1];
-                applyAttrs[0] = attribute.split(":")[1].trim();
+                applyAttrs[0] = attribute.trim();
+//                applyAttrs[0] = attribute.split(":")[1].trim();
                 abeUtil.grantAttrToUser(applyAttrs, applier.getUsername());
                 userService.updateAttributes(applier);
+                log.info("************fabric申请权限开始*****************");
+                fabricService.addAttr(applierChannelName, applier.getId().toString(), targetUser.getId().toString(), attribute, "success");
+//              fabricService.applyForAttribute(applier.getUsername(), targetUser.getUsername(), Attribute.parse(attribute).getValue());
+                log.info("************fabric申请权限结束*****************");
             }
         }
         return new CommonResult<>(200, "审批成功",hasDownApply);

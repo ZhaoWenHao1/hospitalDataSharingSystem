@@ -13,7 +13,7 @@ import com.hust.keyRD.commons.utils.JwtUtil;
 import com.hust.keyRD.commons.utils.MergeAttrs;
 import com.hust.keyRD.commons.vo.ApplyVO;
 
-import com.hust.keyRD.system.api.service.FabricService;
+import com.hust.keyRD.system.api.v2.service.FabricService;
 import com.hust.keyRD.system.dao.UserDao;
 import com.hust.keyRD.system.service.ApplyService;
 import com.hust.keyRD.system.service.ChannelService;
@@ -101,9 +101,15 @@ public class UserController {
 //            user.setAttributes("position:teacher");
 //        }
         user.setFabricUserId(user.getUsername());
+        userDao.register(user);
+        String channelName = channelService.findChannelById(user.getChannelId()).getChannelName();
+        log.info("************fabric申请权限开始*****************");
+        fabricService.addUser(channelName, "certificate", user.getId().toString(), "null");
+        log.info("************fabric申请权限结束*****************");
+
 //        userService.
 //        boolean result = userService.register(user);
-        userDao.register(user);
+
 //        if (!fabricService.addUser(user.getUsername(), Attribute.getAttrs(user.getAttributes()))) {
 //            log.warn("fabric error：注册用户失败");
 //            return new CommonResult<>(400, "注册失败,请联系系统管理员", null);
@@ -112,7 +118,6 @@ public class UserController {
             return new CommonResult<>(400, "注册失败,请选择一个合适的通道", null);
         }
         String token = JwtUtil.createJWT(Integer.MAX_VALUE, user);
-        String channelName = channelService.findChannelById(user.getChannelId()).getChannelName();
         jsonObject.put("token", token);
         jsonObject.put("channelName", channelName);
         jsonObject.put("user", user);

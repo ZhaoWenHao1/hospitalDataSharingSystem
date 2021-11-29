@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "fabric2", url = "http://47.93.101.156:8000")
+@FeignClient(name = "fabric2", url = "http://101.201.49.180:8000")
 public interface FeignService {
     @PostMapping("/putaddattr")
     Response addAttr(@RequestParam("channel_name") String channelName, @RequestParam("args") List<String> args);
@@ -19,7 +19,7 @@ public interface FeignService {
 //    Response attrUser(@RequestParam("requestor") String requester,  @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers,
 //                      @RequestParam("fcn") String fcn, @RequestParam("cc_name") String ccName, @RequestParam("args") List<String> args);
 
-    @PostMapping("/judgement")
+    @PostMapping("/putshare_judgement")
     Response judgement(@RequestParam("channel_name") String channelName,@RequestParam("args") List<String> args);
 //    Response judgement(@RequestParam("requestor") String requester,  @RequestParam("channel_name") String channelName, @RequestParam("peers") String peers,
 //                       @RequestParam("fcn") String fcn, @RequestParam("cc_name") String ccName, @RequestParam("args") List<String> args);

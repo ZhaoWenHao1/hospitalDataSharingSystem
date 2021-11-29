@@ -93,9 +93,9 @@ public class UserServiceImpl implements UserService {
         String[] split = allAttribute.split(SystemConstant.SPLIT_SYMBOL);
         String[] attrs = new String[split.length];
         for (int i = 0;i < split.length;i++) {
-            String[] attrInfo = split[i].split(":");
+//            String[] attrInfo = split[i].split(":");
 //            String attr = attrInfo[0].trim() + SystemConstant.ATTR_CONNECTOR + attrInfo[1].trim();
-            String attr = attrInfo[1].trim();
+            String attr = split[i].trim();
             attrs[i] = attr;
         }
         return attrs;
